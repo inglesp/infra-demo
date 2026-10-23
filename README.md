@@ -88,6 +88,9 @@ just apply      # make the changes
 
 `just tofu ...` runs any other OpenTofu command in `infra/tofu/`.
 
+`just check-infra` checks that the OpenTofu config is formatted and valid.
+It needs no credentials, and CI runs it on every pull request and on pushes to `main`.
+
 OpenTofu's state is kept in the `inglesp-infra-demo-tofu-state` Spaces bucket, in `lon1`.
 The bucket was created by hand, since it can't hold its own state.
 The state is encrypted with the state passphrase: if the passphrase is lost, so is the state.
