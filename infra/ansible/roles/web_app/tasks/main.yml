@@ -68,6 +68,18 @@
   ansible.builtin.command: dokku domains:set {{ app_name }} {{ domain }}
   when: dokku_app_domains is skipped or dokku_app_domains.stdout.split() != [domain]
 
+# Otherwise Dokku publishes the port the image exposes, rather than 80
+- name: Read the app's port mappings
+  ansible.builtin.command: dokku ports:report {{ app_name }} --ports-map
+  register: dokku_app_ports
+  changed_when: false
+  check_mode: false
+  when: app_name in dokku_apps.stdout_lines
+
+- name: Route port 80 to the app
+  ansible.builtin.command: dokku ports:set {{ app_name }} http:80:{{ app_port }}
+  when: dokku_app_ports is skipped or dokku_app_ports.stdout.split() != ["http:80:" ~ app_port]
+
 # The environment holds secrets, so these tasks don't log their output
 - name: Read the app's environment
   ansible.builtin.command: dokku config:export --format json {{ app_name }}
