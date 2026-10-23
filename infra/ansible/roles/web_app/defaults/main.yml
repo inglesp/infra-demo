@@ -5,6 +5,7 @@ app_name: "{{ inventory_hostname }}"
 # The app's environment, set with dokku config:set
 app_env:
   DJANGO_ALLOWED_HOSTS: "{{ domain }}"
+  DJANGO_SECRET_KEY: "{{ secret_key }}"
 
 # The UID the app runs as in its image (see the Dockerfile)
 app_uid: 10001

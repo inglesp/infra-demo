@@ -103,6 +103,7 @@ It needs no credentials, and CI runs it on every pull request and on pushes to `
 OpenTofu's state is kept in the `inglesp-infra-demo-tofu-state` Spaces bucket, in `lon1`.
 The bucket was created by hand, since it can't hold its own state.
 The state is encrypted with the state passphrase: if the passphrase is lost, so is the state.
+The state holds secrets, such as each app's Django secret key, which OpenTofu generates and passes to Ansible in the inventory.
 State isn't locked, so only one person should run `just apply` at a time.
 
 ## Server configuration
