@@ -14,16 +14,8 @@ terraform {
       keys = key_provider.pbkdf2.main
     }
 
-    # Lets existing unencrypted state be read, so that it can be rewritten
-    # encrypted. Removed once that's done.
-    method "unencrypted" "migrate" {}
-
     state {
       method = method.aes_gcm.main
-
-      fallback {
-        method = method.unencrypted.migrate
-      }
     }
   }
 }
