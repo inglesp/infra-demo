@@ -90,6 +90,7 @@
 - name: Mount the volume into the app's container
   ansible.builtin.command: dokku storage:mount {{ app_name }} {{ app_storage_mount }}
   when: dokku_app_storage is skipped or app_storage_mount not in dokku_app_storage.stdout_lines
+  notify: Restart the app
 
 # The environment holds secrets, so these tasks don't log their output
 - name: Read the app's environment
