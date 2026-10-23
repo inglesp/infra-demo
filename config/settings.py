@@ -22,6 +22,9 @@ ALLOWED_HOSTS = [
 
 INSTALLED_APPS = ["counter"]
 
+# CommonMiddleware checks each request's host against ALLOWED_HOSTS
+MIDDLEWARE = ["django.middleware.common.CommonMiddleware"]
+
 ROOT_URLCONF = "config.urls"
 
 DATABASES = {
