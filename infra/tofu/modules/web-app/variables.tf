@@ -13,6 +13,11 @@ variable "size" {
   type        = string
 }
 
+variable "volume_size" {
+  description = "Size of the data volume in GiB"
+  type        = number
+}
+
 variable "domain" {
   description = "The DNS zone for the app, delegated to DigitalOcean; records go at its apex"
   type        = string

@@ -66,6 +66,10 @@ On pull requests, CI builds the image but doesn't publish it.
 
 The app runs on a DigitalOcean droplet, managed with [OpenTofu](https://opentofu.org/) in `infra/tofu/`.
 Each app in `local.apps` in `infra/tofu/main.tf` gets its own droplet, created by the `web-app` module.
+Each droplet has a block storage volume attached, for all persistent data, so that the droplet itself can be replaced.
+The volume isn't mounted yet.
+OpenTofu refuses to destroy a volume: to really delete one, first remove `prevent_destroy` from the `web-app` module.
+Changing a droplet's image or SSH keys only affects new droplets, rather than replacing existing ones.
 Each droplet has a cloud firewall that allows inbound SSH, HTTP, HTTPS and ICMP, and all outbound traffic.
 Each app also has its own DNS zone in DigitalOcean, such as `infra-demo.opensafely.org`, with A and AAAA records pointing at its droplet.
 

@@ -7,12 +7,34 @@ terraform {
 }
 
 resource "digitalocean_droplet" "this" {
-  name     = var.name
-  image    = "ubuntu-24-04-x64"
-  region   = var.region
-  size     = var.size
-  ssh_keys = var.ssh_key_ids
-  ipv6     = true
+  name       = var.name
+  image      = "ubuntu-24-04-x64"
+  region     = var.region
+  size       = var.size
+  ssh_keys   = var.ssh_key_ids
+  ipv6       = true
+  volume_ids = [digitalocean_volume.data.id]
+
+  lifecycle {
+    # Changing either would replace the droplet. A new image only matters
+    # for new droplets, and SSH keys are managed on the droplet once it's
+    # created.
+    ignore_changes = [image, ssh_keys]
+  }
+}
+
+resource "digitalocean_volume" "data" {
+  name                     = "${var.name}-data"
+  region                   = var.region
+  size                     = var.volume_size
+  initial_filesystem_type  = "ext4"
+  initial_filesystem_label = "data"
+  description              = "Persistent data for ${var.name}"
+
+  lifecycle {
+    # Holds all persistent data, so OpenTofu refuses to destroy it
+    prevent_destroy = true
+  }
 }
 
 locals {
