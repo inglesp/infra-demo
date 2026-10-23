@@ -127,6 +127,12 @@ just configure                 # make the changes
 uv installs Ansible the first time you run `just configure`.
 The inventory comes from OpenTofu's `ansible_inventory` output, so run `just apply` first if a droplet has changed.
 
+### Deploys
+
+Each app's image and tag are set in `infra/ansible/host_vars/<app>.yml`.
+On the droplet, `systemctl start deploy` pulls the image, and deploys it by digest if the digest differs from the one Dokku last deployed.
+Its output is in `journalctl -u deploy`.
+
 ## Runbook
 
 ### SSH into a droplet
@@ -134,3 +140,14 @@ The inventory comes from OpenTofu's `ansible_inventory` output, so run `just app
 ```sh
 ssh root@$(just tofu output -json ips | jq -r '.["infra-demo"]')
 ```
+
+### Roll back to an earlier build
+
+Set `image_tag` in `infra/ansible/host_vars/<app>.yml` to `sha-<commit>`, where `<commit>` is the full SHA of a commit on `main`. Then:
+
+```sh
+just configure
+ssh root@infra-demo.opensafely.org systemctl start deploy
+```
+
+Set it back to `latest` to return to deploying each new build.

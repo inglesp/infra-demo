@@ -1,0 +1,16 @@
+#!/bin/bash
+# Deploy an image to a Dokku app, if it differs from what's deployed.
+# Usage: deploy <app> <image:tag>
+set -euo pipefail
+
+app=$1
+image=$2
+
+docker pull --quiet "$image" > /dev/null
+digest=$(docker image inspect --format '{{index .RepoDigests 0}}' "$image")
+deployed=$(dokku git:report "$app" --git-source-image)
+
+if [ "$digest" != "$deployed" ]; then
+    # Deploy by digest, so Dokku records exactly which build is running
+    dokku git:from-image "$app" "$digest"
+fi

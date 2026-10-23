@@ -156,3 +156,20 @@
     owner: "{{ app_uid }}"
     group: "{{ app_uid }}"
     mode: "0755"
+
+- name: Install the deploy script
+  ansible.builtin.copy:
+    src: deploy
+    dest: /usr/local/bin/deploy
+    mode: "0755"
+
+- name: Install the deploy service
+  ansible.builtin.template:
+    src: deploy.service.j2
+    dest: /etc/systemd/system/deploy.service
+    mode: "0644"
+  notify: Reload systemd
+
+# So that systemd has loaded the deploy service before anything starts it
+- name: Run handlers
+  ansible.builtin.meta: flush_handlers

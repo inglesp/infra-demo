@@ -1,0 +1,8 @@
+[Unit]
+Description=Deploy {{ image }}:{{ image_tag }} to Dokku app {{ app_name }}
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/deploy {{ app_name }} {{ image }}:{{ image_tag }}
