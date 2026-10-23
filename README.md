@@ -113,8 +113,10 @@ Ansible runs from your machine, over SSH as root.
 At the moment, it installs Docker, [Dokku](https://dokku.com/) and Dokku's [letsencrypt plugin](https://github.com/dokku/dokku-letsencrypt) (setting its email and adding its renewal cron job), and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
 The mount point is owned by UID 10001, which the app runs as in its image.
 DigitalOcean mounts a newly attached volume under `/mnt/` itself, and Ansible removes that mount.
-It also creates the app in Dokku, routes port 80 to it, and sets its domain and its environment (from `app_env` in the `web_app` role's defaults).
+It also creates the app in Dokku, routes ports 80 and 443 to it, and sets its domain and its environment (from `app_env` in the `web_app` role's defaults).
 It mounts the volume into the app's container at `/data`, so the app's database lives on the volume.
+Once the app has been deployed, it gets a TLS certificate from Let's Encrypt, which the cron job renews.
+HTTP then redirects to HTTPS, and Dokku turns on HSTS, so browsers that have visited will only use HTTPS for the domain.
 
 Dokku has no declarative config, only commands, so Ansible reads each Dokku setting first and only runs a command when the setting differs.
 Ansible doesn't run commands in check mode, so with `--check`, a Dokku command that would run shows as `skipping`.
