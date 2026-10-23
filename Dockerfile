@@ -1,4 +1,4 @@
-FROM python:3.15-slim AS builder
+FROM python:3.14-slim AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:0.13.4 /uv /usr/local/bin/uv
 
@@ -15,7 +15,7 @@ RUN uv sync --locked --no-dev
 
 # The final image has the venv but not uv or its cache. The venv's Python is a
 # symlink to the base image's, so both stages must use the same base image.
-FROM python:3.15-slim
+FROM python:3.14-slim
 
 # gunicorn's control server needs a writable home directory
 RUN groupadd --gid 10001 app && useradd --uid 10001 --gid 10001 --create-home app

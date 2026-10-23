@@ -95,13 +95,27 @@ just apply      # make the changes
 
 `just tofu ...` runs any other OpenTofu command in `infra/tofu/`.
 
-`just check-infra` checks that the OpenTofu config is formatted and valid.
+`just check-infra` checks that the OpenTofu config is formatted and valid, and that the Ansible playbook's syntax is valid.
 It needs no credentials, and CI runs it on every pull request and on pushes to `main`.
 
 OpenTofu's state is kept in the `inglesp-infra-demo-tofu-state` Spaces bucket, in `lon1`.
 The bucket was created by hand, since it can't hold its own state.
 The state is encrypted with the state passphrase: if the passphrase is lost, so is the state.
 State isn't locked, so only one person should run `just apply` at a time.
+
+## Server configuration
+
+What runs on each droplet is configured with [Ansible](https://docs.ansible.com/), in `infra/ansible/`.
+Ansible runs from your machine, over SSH as root.
+At the moment, it installs Docker.
+
+```sh
+just configure --check --diff  # show what would change
+just configure                 # make the changes
+```
+
+uv installs Ansible the first time you run `just configure`.
+The inventory comes from OpenTofu's `ansible_inventory` output, so run `just apply` first if a droplet has changed.
 
 ## Runbook
 
