@@ -41,6 +41,7 @@ output "ansible_inventory" {
       hosts = {
         for name, app in module.web_app : name => {
           ansible_host = app.ipv4_address
+          domain       = app.domain
           volume_name  = app.volume_name
         }
       }
