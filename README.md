@@ -130,7 +130,9 @@ The inventory comes from OpenTofu's `ansible_inventory` output, so run `just app
 ### Deploys
 
 Each app's image and tag are set in `infra/ansible/host_vars/<app>.yml`.
-On the droplet, `systemctl start deploy` pulls the image, and deploys it by digest if the digest differs from the one Dokku last deployed.
+Every minute, a systemd timer on the droplet starts the `deploy` service, which pulls the image, and deploys it by digest if the digest differs from the one Dokku last deployed.
+So a change merged to `main` goes live within a couple of minutes of CI publishing its image.
+To deploy straight away, run `systemctl start deploy` on the droplet.
 Its output is in `journalctl -u deploy`.
 
 ## Runbook
@@ -147,7 +149,7 @@ Set `image_tag` in `infra/ansible/host_vars/<app>.yml` to `sha-<commit>`, where 
 
 ```sh
 just configure
-ssh root@infra-demo.opensafely.org systemctl start deploy
 ```
 
+The next run of the deploy timer, within a minute, deploys it.
 Set it back to `latest` to return to deploying each new build.

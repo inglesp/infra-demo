@@ -170,6 +170,21 @@
     mode: "0644"
   notify: Reload systemd
 
-# So that systemd has loaded the deploy service before anything starts it
+- name: Install the deploy timer
+  ansible.builtin.copy:
+    src: deploy.timer
+    dest: /etc/systemd/system/deploy.timer
+    mode: "0644"
+  notify: Reload systemd
+
+# So that systemd has loaded the deploy units before anything starts them
 - name: Run handlers
   ansible.builtin.meta: flush_handlers
+
+# A timer doesn't start its service again while it's still running, so slow
+# deploys don't pile up
+- name: Start the deploy timer
+  ansible.builtin.systemd_service:
+    name: deploy.timer
+    enabled: true
+    state: started
