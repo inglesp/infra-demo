@@ -7,6 +7,7 @@ locals {
     infra-demo = {
       region = "lon1"
       size   = "s-1vcpu-1gb"
+      domain = "infra-demo.opensafely.org"
     }
   }
 }
@@ -22,6 +23,7 @@ module "web_app" {
   name        = each.key
   region      = each.value.region
   size        = each.value.size
+  domain      = each.value.domain
   ssh_key_ids = [data.digitalocean_ssh_key.admin.id]
 }
 

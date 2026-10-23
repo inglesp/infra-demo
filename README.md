@@ -67,6 +67,7 @@ On pull requests, CI builds the image but doesn't publish it.
 The app runs on a DigitalOcean droplet, managed with [OpenTofu](https://opentofu.org/) in `infra/tofu/`.
 Each app in `local.apps` in `infra/tofu/main.tf` gets its own droplet, created by the `web-app` module.
 Each droplet has a cloud firewall that allows inbound SSH, HTTP, HTTPS and ICMP, and all outbound traffic.
+Each app also has its own DNS zone in DigitalOcean, such as `infra-demo.opensafely.org`, with A and AAAA records pointing at its droplet.
 
 You need:
 
@@ -80,6 +81,7 @@ You need:
 
 - a Spaces access key named `infra-demo-tofu-state-local`, with read/write access to the state bucket (see below), exported as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
 - the state passphrase, from the password manager, exported as `TF_VAR_state_passphrase`
+- each app's zone delegated to DigitalOcean: opensafely.org's DNS is on Cloudflare, which has NS records for `infra-demo` pointing to `ns1.digitalocean.com`, `ns2.digitalocean.com` and `ns3.digitalocean.com`
 
 ```sh
 just tofu init  # once, to download the provider and connect to the state bucket

@@ -72,3 +72,21 @@ resource "digitalocean_firewall" "this" {
     destination_addresses = local.anywhere
   }
 }
+
+resource "digitalocean_domain" "this" {
+  name = var.domain
+}
+
+resource "digitalocean_record" "a" {
+  domain = digitalocean_domain.this.id
+  type   = "A"
+  name   = "@"
+  value  = digitalocean_droplet.this.ipv4_address
+}
+
+resource "digitalocean_record" "aaaa" {
+  domain = digitalocean_domain.this.id
+  type   = "AAAA"
+  name   = "@"
+  value  = digitalocean_droplet.this.ipv6_address
+}
