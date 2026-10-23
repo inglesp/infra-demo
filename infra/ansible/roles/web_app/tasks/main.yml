@@ -5,6 +5,43 @@
     # Don't refresh a cache that's under an hour old, so reruns change nothing
     cache_valid_time: 3600
 
+- name: Add Dokku's apt repository
+  ansible.builtin.deb822_repository:
+    name: dokku
+    types: deb
+    uris: https://packagecloud.io/dokku/dokku/ubuntu/
+    suites: "{{ ansible_facts['distribution_release'] }}"
+    components: main
+    signed_by: https://packagecloud.io/dokku/dokku/gpgkey
+  register: dokku_repo
+
+# The cache was probably refreshed above, so cache_valid_time wouldn't refresh
+# it again to pick up the new repository
+- name: Update the apt cache for Dokku's repository
+  ansible.builtin.apt:
+    update_cache: true
+  when: dokku_repo.changed
+
+# skip_key_file: we don't deploy with `git push`, so Dokku needs no SSH key
+# web_config: don't serve Dokku's old web-based setup page
+- name: Answer Dokku's install questions
+  ansible.builtin.debconf:
+    name: dokku
+    question: dokku/{{ item.question }}
+    vtype: "{{ item.vtype }}"
+    value: "{{ item.value }}"
+  loop:
+    - { question: vhost_enable, vtype: boolean, value: "true" }
+    - { question: hostname, vtype: string, value: "{{ domain }}" }
+    - { question: skip_key_file, vtype: boolean, value: "true" }
+    - { question: web_config, vtype: boolean, value: "false" }
+    - { question: nginx_enable, vtype: boolean, value: "true" }
+
+- name: Install Dokku
+  ansible.builtin.apt:
+    name: dokku
+  notify: Install Dokku's plugin dependencies
+
 # DigitalOcean mounts a newly attached volume under /mnt with its own systemd
 # unit. We mount it ourselves, so remove that.
 - name: Remove DigitalOcean's mount of the volume

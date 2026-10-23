@@ -107,7 +107,7 @@ State isn't locked, so only one person should run `just apply` at a time.
 
 What runs on each droplet is configured with [Ansible](https://docs.ansible.com/), in `infra/ansible/`.
 Ansible runs from your machine, over SSH as root.
-At the moment, it installs Docker, and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
+At the moment, it installs Docker and [Dokku](https://dokku.com/), and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
 The mount point is owned by UID 10001, which the app runs as in its image.
 DigitalOcean mounts a newly attached volume under `/mnt/` itself, and Ansible removes that mount.
 
