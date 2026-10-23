@@ -42,6 +42,39 @@
     name: dokku
   notify: Install Dokku's plugin dependencies
 
+- name: List Dokku's plugins
+  ansible.builtin.command: dokku --quiet plugin:list
+  register: dokku_plugins
+  changed_when: false
+  check_mode: false
+
+# Each line of plugin:list starts with the plugin's name
+- name: Install Dokku's letsencrypt plugin
+  ansible.builtin.command: >-
+    dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git
+    --committish {{ letsencrypt_plugin_version }} --name letsencrypt
+  when: "'letsencrypt' not in dokku_plugins.stdout_lines | map('split') | map('first') | list"
+
+- name: Read letsencrypt's global settings
+  ansible.builtin.command: dokku letsencrypt:report --global --format json
+  register: letsencrypt_global
+  changed_when: false
+  check_mode: false
+
+- name: Set letsencrypt's email
+  ansible.builtin.command: dokku letsencrypt:set --global email {{ letsencrypt_email }}
+  when: (letsencrypt_global.stdout | from_json)["global-email"] != letsencrypt_email
+
+- name: Read the status of letsencrypt's renewal cron job
+  ansible.builtin.command: dokku letsencrypt:cron-job
+  register: letsencrypt_cron_job
+  changed_when: false
+  check_mode: false
+
+- name: Add letsencrypt's renewal cron job
+  ansible.builtin.command: dokku letsencrypt:cron-job --add
+  when: "'cron job is not enabled' in letsencrypt_cron_job.stdout"
+
 # Dokku has no declarative config, so each setting is read first, and only
 # changed when it differs. The reads run in check mode too, since they change
 # nothing.
@@ -68,6 +101,13 @@
   ansible.builtin.command: dokku domains:set {{ app_name }} {{ domain }}
   when: dokku_app_domains is skipped or dokku_app_domains.stdout.split() != [domain]
 
+- name: Read whether letsencrypt is active for the app
+  ansible.builtin.command: dokku letsencrypt:report {{ app_name }} --letsencrypt-active
+  register: letsencrypt_active
+  changed_when: false
+  check_mode: false
+  when: app_name in dokku_apps.stdout_lines
+
 # Otherwise Dokku publishes the port the image exposes, rather than 80
 - name: Read the app's port mappings
   ansible.builtin.command: dokku ports:report {{ app_name }} --ports-map
@@ -76,9 +116,31 @@
   check_mode: false
   when: app_name in dokku_apps.stdout_lines
 
-- name: Route port 80 to the app
-  ansible.builtin.command: dokku ports:set {{ app_name }} http:80:{{ app_port }}
-  when: dokku_app_ports is skipped or dokku_app_ports.stdout.split() != ["http:80:" ~ app_port]
+# Enabling letsencrypt adds a mapping for 443, and disabling it removes it
+- name: Route ports 80 and 443 to the app
+  vars:
+    app_ports: >-
+      {{ ["http:80:" ~ app_port]
+         + (["https:443:" ~ app_port] if letsencrypt_active is not skipped and letsencrypt_active.stdout == "true" else []) }}
+  ansible.builtin.command: dokku ports:set {{ app_name }} {{ app_ports | join(" ") }}
+  when: dokku_app_ports is skipped or dokku_app_ports.stdout.split() != app_ports
+
+- name: Check whether the app has been deployed
+  ansible.builtin.command: dokku ps:report {{ app_name }} --deployed
+  register: dokku_app_deployed
+  changed_when: false
+  check_mode: false
+  when: app_name in dokku_apps.stdout_lines
+
+# Let's Encrypt checks the domain by fetching a file from the app over HTTP, so
+# this waits until the app has been deployed. On a new droplet, that means the
+# first `just configure` after the first deploy.
+- name: Enable letsencrypt for the app
+  ansible.builtin.command: dokku letsencrypt:enable {{ app_name }}
+  when: >-
+    dokku_app_deployed is not skipped
+    and dokku_app_deployed.stdout == "true"
+    and letsencrypt_active.stdout != "true"
 
 - name: Read the app's storage mounts
   ansible.builtin.command: dokku --quiet storage:list {{ app_name }}
