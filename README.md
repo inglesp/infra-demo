@@ -78,6 +78,7 @@ You need:
   ```
 
 - a Spaces access key named `infra-demo-tofu-state-local`, with read/write access to the state bucket (see below), exported as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+- the state passphrase, from the password manager, exported as `TF_VAR_state_passphrase`
 
 ```sh
 just tofu init  # once, to download the provider and connect to the state bucket
@@ -89,6 +90,7 @@ just apply      # make the changes
 
 OpenTofu's state is kept in the `inglesp-infra-demo-tofu-state` Spaces bucket, in `lon1`.
 The bucket was created by hand, since it can't hold its own state.
+The state is encrypted with the state passphrase: if the passphrase is lost, so is the state.
 State isn't locked, so only one person should run `just apply` at a time.
 
 ## Runbook
