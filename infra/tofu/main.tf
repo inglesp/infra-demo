@@ -5,9 +5,10 @@ locals {
   # One droplet per app
   apps = {
     infra-demo = {
-      region = "lon1"
-      size   = "s-1vcpu-1gb"
-      domain = "infra-demo.opensafely.org"
+      region      = "lon1"
+      size        = "s-1vcpu-1gb"
+      volume_size = 1 # GiB
+      domain      = "infra-demo.opensafely.org"
     }
   }
 }
@@ -23,6 +24,7 @@ module "web_app" {
   name        = each.key
   region      = each.value.region
   size        = each.value.size
+  volume_size = each.value.volume_size
   domain      = each.value.domain
   ssh_key_ids = [data.digitalocean_ssh_key.admin.id]
 }
