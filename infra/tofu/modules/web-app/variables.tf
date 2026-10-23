@@ -13,6 +13,11 @@ variable "size" {
   type        = string
 }
 
+variable "domain" {
+  description = "The DNS zone for the app, delegated to DigitalOcean; records go at its apex"
+  type        = string
+}
+
 variable "ssh_key_ids" {
   description = "IDs of the DigitalOcean SSH keys that can log in as root"
   type        = list(string)
