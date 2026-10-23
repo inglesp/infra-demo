@@ -2,6 +2,10 @@
 # OpenTofu
 app_name: "{{ inventory_hostname }}"
 
+# Dokku's letsencrypt plugin, pinned to a release. Changing this doesn't
+# upgrade an installed plugin: run `dokku plugin:update letsencrypt <version>`.
+letsencrypt_plugin_version: 0.25.2
+
 # The port the app listens on in its container (see the Dockerfile)
 app_port: 8000
 

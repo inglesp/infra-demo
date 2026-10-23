@@ -42,6 +42,19 @@
     name: dokku
   notify: Install Dokku's plugin dependencies
 
+- name: List Dokku's plugins
+  ansible.builtin.command: dokku --quiet plugin:list
+  register: dokku_plugins
+  changed_when: false
+  check_mode: false
+
+# Each line of plugin:list starts with the plugin's name
+- name: Install Dokku's letsencrypt plugin
+  ansible.builtin.command: >-
+    dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git
+    --committish {{ letsencrypt_plugin_version }} --name letsencrypt
+  when: "'letsencrypt' not in dokku_plugins.stdout_lines | map('split') | map('first') | list"
+
 # Dokku has no declarative config, so each setting is read first, and only
 # changed when it differs. The reads run in check mode too, since they change
 # nothing.
