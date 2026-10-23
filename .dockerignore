@@ -4,6 +4,7 @@
 !pyproject.toml
 !uv.lock
 !manage.py
+!app.json
 !config/
 !counter/
 **/__pycache__
