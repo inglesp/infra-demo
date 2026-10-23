@@ -32,3 +32,13 @@ docker-run: docker-build
         -e DJANGO_ALLOWED_HOSTS=localhost \
         -v infra-demo-data:/data \
         infra-demo
+
+# Run OpenTofu in infra/tofu, e.g. `just tofu init`
+tofu *args:
+    tofu -chdir=infra/tofu {{args}}
+
+# Show what OpenTofu would change
+plan: (tofu "plan")
+
+# Apply OpenTofu's changes
+apply: (tofu "apply")
