@@ -14,6 +14,19 @@ just run
 Then open http://localhost:8000.
 The visit count is stored in `db.sqlite3`.
 
+## Running in Docker
+
+You also need [Docker](https://docs.docker.com/get-docker/).
+
+```sh
+just docker-run
+```
+
+Then open http://localhost:8000.
+This builds the image and runs it with gunicorn, applying migrations first.
+The visit count is stored in the `infra-demo-data` Docker volume, so it survives restarts.
+To start again from zero, run `docker volume rm infra-demo-data`.
+
 ## Configuration
 
 The app is configured with environment variables:
