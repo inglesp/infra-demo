@@ -42,6 +42,19 @@
     name: dokku
   notify: Install Dokku's plugin dependencies
 
+# Dokku has no declarative config, so each setting is read first, and only
+# changed when it differs. The reads run in check mode too, since they change
+# nothing.
+- name: List Dokku's apps
+  ansible.builtin.command: dokku --quiet apps:list
+  register: dokku_apps
+  changed_when: false
+  check_mode: false
+
+- name: Create the Dokku app
+  ansible.builtin.command: dokku apps:create {{ app_name }}
+  when: app_name not in dokku_apps.stdout_lines
+
 # DigitalOcean mounts a newly attached volume under /mnt with its own systemd
 # unit. We mount it ourselves, so remove that.
 - name: Remove DigitalOcean's mount of the volume

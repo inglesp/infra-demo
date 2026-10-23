@@ -1,3 +1,7 @@
+# The app's name in Dokku: the inventory host, which is the app's name in
+# OpenTofu
+app_name: "{{ inventory_hostname }}"
+
 # The UID the app runs as in its image (see the Dockerfile)
 app_uid: 10001
 
@@ -5,4 +9,4 @@ app_uid: 10001
 volume_device: /dev/disk/by-id/scsi-0DO_Volume_{{ volume_name }}
 
 # Where the volume, and so all persistent data, is mounted
-data_dir: /srv/{{ inventory_hostname }}/data
+data_dir: /srv/{{ app_name }}/data
