@@ -4,3 +4,6 @@ db.sqlite3
 commit-message.txt
 validation-instructions.txt
 pr-description.txt
+infra/tofu/.terraform/
+*.tfstate
+*.tfstate.*

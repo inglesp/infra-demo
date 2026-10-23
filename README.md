@@ -61,3 +61,37 @@ On every push to `main`, CI publishes the image to ghcr.io with two tags:
 - `ghcr.io/inglesp/infra-demo:sha-<commit>`, where `<commit>` is the full commit SHA
 
 On pull requests, CI builds the image but doesn't publish it.
+
+## Infrastructure
+
+The app runs on a DigitalOcean droplet, managed with [OpenTofu](https://opentofu.org/) in `infra/tofu/`.
+Each app in `local.apps` in `infra/tofu/main.tf` gets its own droplet, created by the `web-app` module.
+
+You need:
+
+- [OpenTofu](https://opentofu.org/docs/intro/install/), [doctl](https://docs.digitalocean.com/reference/doctl/how-to/install/) and [jq](https://jqlang.org/)
+- a DigitalOcean API token with full access, named `infra-demo-tofu-local`, exported as `DIGITALOCEAN_ACCESS_TOKEN` (OpenTofu and doctl both read it)
+- your SSH public key uploaded to DigitalOcean with the name in `local.ssh_key_name`:
+
+  ```sh
+  doctl compute ssh-key import inglesp --public-key-file ~/.ssh/id_ed25519.pub
+  ```
+
+```sh
+just tofu init  # once, to download the provider
+just plan       # show what would change
+just apply      # make the changes
+```
+
+`just tofu ...` runs any other OpenTofu command in `infra/tofu/`.
+
+OpenTofu's state is kept locally, in `infra/tofu/terraform.tfstate`, and isn't committed.
+So for now, only one person can manage the infrastructure.
+
+## Runbook
+
+### SSH into a droplet
+
+```sh
+ssh root@$(just tofu output -json ips | jq -r '.["infra-demo"]')
+```

@@ -11,9 +11,9 @@ For each commit, I will also expect:
 * commit-message.txt containing a proposed commit message
 * validation-instructions.txt, containing instructions for me to validate, including any one-off prerequisites (eg setting up accounts) that the commit first needs
 
-For the last commit of a PR with multiple commits, I will also expect:
+For the last commit of a PR with multiple commits, or of any PR that changes OpenTofu config, I will also expect:
 
-* pr-description.txt, containing a PR title and description covering the whole PR
+* pr-description.txt, containing a PR title and description covering the whole PR, and for OpenTofu changes, a placeholder for the output of `just plan`
 
 These files are overwritten each time and are gitignored.
 
