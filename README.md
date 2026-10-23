@@ -127,6 +127,14 @@ just configure                 # make the changes
 uv installs Ansible the first time you run `just configure`.
 The inventory comes from OpenTofu's `ansible_inventory` output, so run `just apply` first if a droplet has changed.
 
+### Deploys
+
+Each app's image and tag are set in `infra/ansible/host_vars/<app>.yml`.
+Every minute, a systemd timer on the droplet starts the `deploy` service, which pulls the image, and deploys it by digest if the digest differs from the one Dokku last deployed.
+So a change merged to `main` goes live within a couple of minutes of CI publishing its image.
+To deploy straight away, run `systemctl start deploy` on the droplet.
+Its output is in `journalctl -u deploy`.
+
 ## Runbook
 
 ### SSH into a droplet
@@ -134,3 +142,14 @@ The inventory comes from OpenTofu's `ansible_inventory` output, so run `just app
 ```sh
 ssh root@$(just tofu output -json ips | jq -r '.["infra-demo"]')
 ```
+
+### Roll back to an earlier build
+
+Set `image_tag` in `infra/ansible/host_vars/<app>.yml` to `sha-<commit>`, where `<commit>` is the full SHA of a commit on `main`. Then:
+
+```sh
+just configure
+```
+
+The next run of the deploy timer, within a minute, deploys it.
+Set it back to `latest` to return to deploying each new build.

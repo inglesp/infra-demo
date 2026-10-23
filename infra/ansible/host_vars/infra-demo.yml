@@ -1,0 +1,3 @@
+image: ghcr.io/inglesp/infra-demo
+# A tag, e.g. latest, or sha-<commit> to pin (or roll back to) a build
+image_tag: latest
