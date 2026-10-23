@@ -33,3 +33,12 @@ output "ips" {
   description = "Each app's droplet's public IPv4 address"
   value       = { for name, app in module.web_app : name => app.ipv4_address }
 }
+
+output "ansible_inventory" {
+  description = "Ansible inventory, as JSON, for just configure"
+  value = {
+    all = {
+      hosts = { for name, app in module.web_app : name => { ansible_host = app.ipv4_address } }
+    }
+  }
+}

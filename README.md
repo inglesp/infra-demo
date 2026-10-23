@@ -103,6 +103,20 @@ The bucket was created by hand, since it can't hold its own state.
 The state is encrypted with the state passphrase: if the passphrase is lost, so is the state.
 State isn't locked, so only one person should run `just apply` at a time.
 
+## Server configuration
+
+What runs on each droplet is configured with [Ansible](https://docs.ansible.com/), in `infra/ansible/`.
+Ansible runs from your machine, over SSH as root.
+At the moment, it installs Docker.
+
+```sh
+just configure --check --diff  # show what would change
+just configure                 # make the changes
+```
+
+uv installs Ansible the first time you run `just configure`.
+The inventory comes from OpenTofu's `ansible_inventory` output, so run `just apply` first if a droplet has changed.
+
 ## Runbook
 
 ### SSH into a droplet

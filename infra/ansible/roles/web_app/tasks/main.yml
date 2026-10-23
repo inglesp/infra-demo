@@ -1,0 +1,6 @@
+- name: Install Docker
+  ansible.builtin.apt:
+    name: docker.io
+    update_cache: true
+    # Don't refresh a cache that's under an hour old, so reruns change nothing
+    cache_valid_time: 3600

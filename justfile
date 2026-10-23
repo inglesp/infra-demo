@@ -48,3 +48,13 @@ check-infra:
     just tofu fmt -check -recursive
     just tofu init -backend=false -input=false
     just tofu validate
+
+# Configure the droplets with Ansible, e.g. `just configure --check --diff`
+configure *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    inventory=$(mktemp --suffix .json)
+    trap 'rm -f "$inventory"' EXIT
+    just tofu output -json ansible_inventory > "$inventory"
+    cd infra/ansible
+    uv run --group infra ansible-playbook -i "$inventory" playbook.yml {{args}}
