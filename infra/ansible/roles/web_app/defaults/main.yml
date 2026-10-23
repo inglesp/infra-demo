@@ -6,6 +6,9 @@ app_name: "{{ inventory_hostname }}"
 # upgrade an installed plugin: run `dokku plugin:update letsencrypt <version>`.
 letsencrypt_plugin_version: 0.25.2
 
+# Where Let's Encrypt sends warnings about certificates that are about to expire
+letsencrypt_email: peter.inglesby@thedatalab.org
+
 # The port the app listens on in its container (see the Dockerfile)
 app_port: 8000
 

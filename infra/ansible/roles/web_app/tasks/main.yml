@@ -55,6 +55,26 @@
     --committish {{ letsencrypt_plugin_version }} --name letsencrypt
   when: "'letsencrypt' not in dokku_plugins.stdout_lines | map('split') | map('first') | list"
 
+- name: Read letsencrypt's global settings
+  ansible.builtin.command: dokku letsencrypt:report --global --format json
+  register: letsencrypt_global
+  changed_when: false
+  check_mode: false
+
+- name: Set letsencrypt's email
+  ansible.builtin.command: dokku letsencrypt:set --global email {{ letsencrypt_email }}
+  when: (letsencrypt_global.stdout | from_json)["global-email"] != letsencrypt_email
+
+- name: Read the status of letsencrypt's renewal cron job
+  ansible.builtin.command: dokku letsencrypt:cron-job
+  register: letsencrypt_cron_job
+  changed_when: false
+  check_mode: false
+
+- name: Add letsencrypt's renewal cron job
+  ansible.builtin.command: dokku letsencrypt:cron-job --add
+  when: "'cron job is not enabled' in letsencrypt_cron_job.stdout"
+
 # Dokku has no declarative config, so each setting is read first, and only
 # changed when it differs. The reads run in check mode too, since they change
 # nothing.
