@@ -3,6 +3,9 @@ terraform {
     digitalocean = {
       source = "digitalocean/digitalocean"
     }
+    random = {
+      source = "hashicorp/random"
+    }
   }
 }
 
@@ -93,6 +96,13 @@ resource "digitalocean_firewall" "this" {
     protocol              = "icmp"
     destination_addresses = local.anywhere
   }
+}
+
+# Django's secret key. It's kept in the (encrypted) state, so it stays the same
+# across runs. Alphanumeric, so it never needs quoting.
+resource "random_password" "secret_key" {
+  length  = 64
+  special = false
 }
 
 resource "digitalocean_domain" "this" {

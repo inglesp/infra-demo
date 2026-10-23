@@ -103,6 +103,7 @@ It needs no credentials, and CI runs it on every pull request and on pushes to `
 OpenTofu's state is kept in the `inglesp-infra-demo-tofu-state` Spaces bucket, in `lon1`.
 The bucket was created by hand, since it can't hold its own state.
 The state is encrypted with the state passphrase: if the passphrase is lost, so is the state.
+The state holds secrets, such as each app's Django secret key, which OpenTofu generates and passes to Ansible in the inventory.
 State isn't locked, so only one person should run `just apply` at a time.
 
 ## Server configuration
@@ -112,7 +113,7 @@ Ansible runs from your machine, over SSH as root.
 At the moment, it installs Docker and [Dokku](https://dokku.com/), and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
 The mount point is owned by UID 10001, which the app runs as in its image.
 DigitalOcean mounts a newly attached volume under `/mnt/` itself, and Ansible removes that mount.
-It also creates the app in Dokku, and sets its domain.
+It also creates the app in Dokku, routes port 80 to it, and sets its domain and its environment (from `app_env` in the `web_app` role's defaults).
 
 Dokku has no declarative config, only commands, so Ansible reads each Dokku setting first and only runs a command when the setting differs.
 Ansible doesn't run commands in check mode, so with `--check`, a Dokku command that would run shows as `skipping`.

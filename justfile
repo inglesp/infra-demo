@@ -54,6 +54,8 @@ check-infra:
 configure *args:
     #!/usr/bin/env bash
     set -euo pipefail
+    # The inventory includes secrets. mktemp makes the file readable only by
+    # you, and it's deleted on exit.
     inventory=$(mktemp --suffix .json)
     trap 'rm -f "$inventory"' EXIT
     just tofu output -json ansible_inventory > "$inventory"

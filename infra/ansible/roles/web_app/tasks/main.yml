@@ -68,6 +68,36 @@
   ansible.builtin.command: dokku domains:set {{ app_name }} {{ domain }}
   when: dokku_app_domains is skipped or dokku_app_domains.stdout.split() != [domain]
 
+# Otherwise Dokku publishes the port the image exposes, rather than 80
+- name: Read the app's port mappings
+  ansible.builtin.command: dokku ports:report {{ app_name }} --ports-map
+  register: dokku_app_ports
+  changed_when: false
+  check_mode: false
+  when: app_name in dokku_apps.stdout_lines
+
+- name: Route port 80 to the app
+  ansible.builtin.command: dokku ports:set {{ app_name }} http:80:{{ app_port }}
+  when: dokku_app_ports is skipped or dokku_app_ports.stdout.split() != ["http:80:" ~ app_port]
+
+# The environment holds secrets, so these tasks don't log their output
+- name: Read the app's environment
+  ansible.builtin.command: dokku config:export --format json {{ app_name }}
+  register: dokku_config
+  changed_when: false
+  check_mode: false
+  when: app_name in dokku_apps.stdout_lines
+  no_log: true
+
+# Each key is set on its own, and only if it differs, since config:set
+# restarts the app. argv passes the value as it is, without splitting it.
+- name: Set the app's environment
+  ansible.builtin.command:
+    argv: [dokku, config:set, "{{ app_name }}", "{{ item.key }}={{ item.value }}"]
+  loop: "{{ app_env | dict2items }}"
+  when: dokku_config is skipped or (dokku_config.stdout | from_json).get(item.key) != item.value
+  no_log: true
+
 # DigitalOcean mounts a newly attached volume under /mnt with its own systemd
 # unit. We mount it ourselves, so remove that.
 - name: Remove DigitalOcean's mount of the volume
