@@ -67,7 +67,7 @@ On pull requests, CI builds the image but doesn't publish it.
 The app runs on a DigitalOcean droplet, managed with [OpenTofu](https://opentofu.org/) in `infra/tofu/`.
 Each app in `local.apps` in `infra/tofu/main.tf` gets its own droplet, created by the `web-app` module.
 Each droplet has a block storage volume attached, for all persistent data, so that the droplet itself can be replaced.
-The volume isn't mounted yet.
+Ansible mounts it at `/srv/<app>/data`, owned by the app's UID (see below).
 OpenTofu refuses to destroy a volume: to really delete one, first remove `prevent_destroy` from the `web-app` module.
 Changing a droplet's image or SSH keys only affects new droplets, rather than replacing existing ones.
 Each droplet has a cloud firewall that allows inbound SSH, HTTP, HTTPS and ICMP, and all outbound traffic.
@@ -107,7 +107,9 @@ State isn't locked, so only one person should run `just apply` at a time.
 
 What runs on each droplet is configured with [Ansible](https://docs.ansible.com/), in `infra/ansible/`.
 Ansible runs from your machine, over SSH as root.
-At the moment, it installs Docker.
+At the moment, it installs Docker, and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
+The mount point is owned by UID 10001, which the app runs as in its image.
+DigitalOcean mounts a newly attached volume under `/mnt/` itself, and Ansible removes that mount.
 
 ```sh
 just configure --check --diff  # show what would change
