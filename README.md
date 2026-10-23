@@ -95,7 +95,7 @@ just apply      # make the changes
 
 `just tofu ...` runs any other OpenTofu command in `infra/tofu/`.
 
-`just check-infra` checks that the OpenTofu config is formatted and valid.
+`just check-infra` checks that the OpenTofu config is formatted and valid, and that the Ansible playbook's syntax is valid.
 It needs no credentials, and CI runs it on every pull request and on pushes to `main`.
 
 OpenTofu's state is kept in the `inglesp-infra-demo-tofu-state` Spaces bucket, in `lon1`.

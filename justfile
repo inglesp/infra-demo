@@ -43,11 +43,12 @@ plan: (tofu "plan")
 # Apply OpenTofu's changes
 apply: (tofu "apply")
 
-# Check OpenTofu formatting and validity (needs no credentials)
+# Check OpenTofu formatting and validity, and Ansible syntax (needs no credentials)
 check-infra:
     just tofu fmt -check -recursive
     just tofu init -backend=false -input=false
     just tofu validate
+    cd infra/ansible && uv run --group infra ansible-playbook --syntax-check -i localhost, playbook.yml
 
 # Configure the droplets with Ansible, e.g. `just configure --check --diff`
 configure *args:
