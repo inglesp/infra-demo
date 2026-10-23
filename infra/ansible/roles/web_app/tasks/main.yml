@@ -29,6 +29,12 @@
         state: absent
       notify: Reload systemd
 
+# On a new droplet, the volume can be attached after Ansible has started
+- name: Wait for the volume's device
+  ansible.builtin.wait_for:
+    path: "{{ volume_device }}"
+    timeout: 120
+
 - name: Mount the volume
   ansible.posix.mount:
     path: "{{ data_dir }}"
