@@ -66,6 +66,7 @@ On pull requests, CI builds the image but doesn't publish it.
 
 The app runs on a DigitalOcean droplet, managed with [OpenTofu](https://opentofu.org/) in `infra/tofu/`.
 Each app in `local.apps` in `infra/tofu/main.tf` gets its own droplet, created by the `web-app` module.
+Each droplet has a cloud firewall that allows inbound SSH, HTTP, HTTPS and ICMP, and all outbound traffic.
 
 You need:
 
