@@ -112,7 +112,7 @@ Ansible runs from your machine, over SSH as root.
 At the moment, it installs Docker and [Dokku](https://dokku.com/), and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
 The mount point is owned by UID 10001, which the app runs as in its image.
 DigitalOcean mounts a newly attached volume under `/mnt/` itself, and Ansible removes that mount.
-It also creates the app in Dokku.
+It also creates the app in Dokku, and sets its domain.
 
 Dokku has no declarative config, only commands, so Ansible reads each Dokku setting first and only runs a command when the setting differs.
 Ansible doesn't run commands in check mode, so with `--check`, a Dokku command that would run shows as `skipping`.
