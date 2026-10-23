@@ -22,4 +22,4 @@ just check  # check formatting and lint, and run the tests
 just fix    # fix formatting and lint where possible
 ```
 
-Run `just check` before pushing.
+CI runs `just check` on every pull request and on pushes to `main`.
