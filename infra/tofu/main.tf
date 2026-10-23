@@ -38,7 +38,12 @@ output "ansible_inventory" {
   description = "Ansible inventory, as JSON, for just configure"
   value = {
     all = {
-      hosts = { for name, app in module.web_app : name => { ansible_host = app.ipv4_address } }
+      hosts = {
+        for name, app in module.web_app : name => {
+          ansible_host = app.ipv4_address
+          volume_name  = app.volume_name
+        }
+      }
     }
   }
 }

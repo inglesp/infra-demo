@@ -1,0 +1,8 @@
+# The UID the app runs as in its image (see the Dockerfile)
+app_uid: 10001
+
+# The volume's device, named after the volume, which is unique
+volume_device: /dev/disk/by-id/scsi-0DO_Volume_{{ volume_name }}
+
+# Where the volume, and so all persistent data, is mounted
+data_dir: /srv/{{ inventory_hostname }}/data
