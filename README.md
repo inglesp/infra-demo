@@ -51,6 +51,7 @@ just fix    # fix formatting and lint where possible
 ```
 
 CI runs `just check` on every pull request and on pushes to `main`.
+Its actions are pinned to commit SHAs.
 
 ## Published image
 
