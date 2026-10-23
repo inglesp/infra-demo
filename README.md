@@ -51,3 +51,12 @@ just fix    # fix formatting and lint where possible
 ```
 
 CI runs `just check` on every pull request and on pushes to `main`.
+
+## Published image
+
+On every push to `main`, CI publishes the image to ghcr.io with two tags:
+
+- `ghcr.io/inglesp/infra-demo:latest`
+- `ghcr.io/inglesp/infra-demo:sha-<commit>`, where `<commit>` is the full commit SHA
+
+On pull requests, CI builds the image but doesn't publish it.
