@@ -114,6 +114,7 @@ At the moment, it installs Docker and [Dokku](https://dokku.com/), and mounts ea
 The mount point is owned by UID 10001, which the app runs as in its image.
 DigitalOcean mounts a newly attached volume under `/mnt/` itself, and Ansible removes that mount.
 It also creates the app in Dokku, routes port 80 to it, and sets its domain and its environment (from `app_env` in the `web_app` role's defaults).
+It mounts the volume into the app's container at `/data`, so the app's database lives on the volume.
 
 Dokku has no declarative config, only commands, so Ansible reads each Dokku setting first and only runs a command when the setting differs.
 Ansible doesn't run commands in check mode, so with `--check`, a Dokku command that would run shows as `skipping`.
