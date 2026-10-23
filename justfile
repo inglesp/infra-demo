@@ -3,12 +3,12 @@ default:
 
 # Run the development server
 run:
-    uv run manage.py migrate
-    uv run manage.py runserver
+    DJANGO_DEBUG=1 uv run manage.py migrate
+    DJANGO_DEBUG=1 uv run manage.py runserver
 
 # Run the tests
 test:
-    uv run pytest
+    DJANGO_DEBUG=1 uv run pytest
 
 # Check formatting, lint, and run the tests
 check:
