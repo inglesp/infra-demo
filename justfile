@@ -20,3 +20,15 @@ check:
 fix:
     uv run ruff check --fix
     uv run ruff format
+
+# Build the container image
+docker-build:
+    docker build -t infra-demo .
+
+# Run the app in a container, keeping its data in the infra-demo-data volume
+docker-run: docker-build
+    docker run --rm -p 8000:8000 \
+        -e DJANGO_SECRET_KEY=insecure-docker-run-key \
+        -e DJANGO_ALLOWED_HOSTS=localhost \
+        -v infra-demo-data:/data \
+        infra-demo
