@@ -42,3 +42,9 @@ plan: (tofu "plan")
 
 # Apply OpenTofu's changes
 apply: (tofu "apply")
+
+# Check OpenTofu formatting and validity (needs no credentials)
+check-infra:
+    just tofu fmt -check -recursive
+    just tofu init -backend=false -input=false
+    just tofu validate
