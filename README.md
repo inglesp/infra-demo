@@ -14,8 +14,12 @@ just run
 Then open http://localhost:8000.
 The visit count is stored in `db.sqlite3`.
 
-## Running tests
+## Tests and checks
 
 ```sh
-just test
+just test   # run the tests
+just check  # check formatting and lint, and run the tests
+just fix    # fix formatting and lint where possible
 ```
+
+Run `just check` before pushing.

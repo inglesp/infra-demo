@@ -9,3 +9,14 @@ run:
 # Run the tests
 test:
     uv run pytest
+
+# Check formatting, lint, and run the tests
+check:
+    uv run ruff format --check
+    uv run ruff check
+    just test
+
+# Fix lint and formatting where possible
+fix:
+    uv run ruff check --fix
+    uv run ruff format
