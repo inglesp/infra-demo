@@ -25,6 +25,7 @@ just docker-run
 Then open http://localhost:8000.
 This builds the image and runs it with gunicorn, applying migrations first.
 The page shows the commit the image was built from.
+`/health/` returns `ok` for health checks, whatever the request's `Host` header.
 The visit count is stored in the `infra-demo-data` Docker volume, so it survives restarts.
 To start again from zero, run `docker volume rm infra-demo-data`.
 

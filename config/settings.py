@@ -22,8 +22,17 @@ ALLOWED_HOSTS = [
 
 INSTALLED_APPS = ["counter"]
 
-# CommonMiddleware checks each request's host against ALLOWED_HOSTS
-MIDDLEWARE = ["django.middleware.common.CommonMiddleware"]
+# Django only checks a request's host against ALLOWED_HOSTS when something calls
+# request.get_host(). CommonMiddleware does this for every request, so without
+# it, requests for any host would be answered.
+#
+# Dokku's health checks call the container directly, without the app's domain,
+# so the health check middleware must come first, to answer them before the
+# host is checked.
+MIDDLEWARE = [
+    "config.middleware.health_check",
+    "django.middleware.common.CommonMiddleware",
+]
 
 ROOT_URLCONF = "config.urls"
 
