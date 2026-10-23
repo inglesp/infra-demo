@@ -3,3 +3,4 @@ __pycache__/
 db.sqlite3
 commit-message.txt
 validation-instructions.txt
+pr-description.txt
