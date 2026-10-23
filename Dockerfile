@@ -31,6 +31,11 @@ RUN mkdir /data && chown app:app /data
 
 ENV PATH="/app/.venv/bin:$PATH" DATABASE_PATH=/data/db.sqlite3
 
+# The commit the image was built from, shown on the page. This changes on every
+# build, so it comes late, after the layers it would otherwise invalidate.
+ARG GIT_COMMIT=unknown
+ENV GIT_COMMIT=$GIT_COMMIT
+
 USER 10001:10001
 
 EXPOSE 8000

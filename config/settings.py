@@ -31,6 +31,8 @@ DATABASES = {
     }
 }
 
+GIT_COMMIT = os.environ.get("GIT_COMMIT", "unknown")
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 USE_TZ = True

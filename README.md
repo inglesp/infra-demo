@@ -24,6 +24,7 @@ just docker-run
 
 Then open http://localhost:8000.
 This builds the image and runs it with gunicorn, applying migrations first.
+The page shows the commit the image was built from.
 The visit count is stored in the `infra-demo-data` Docker volume, so it survives restarts.
 To start again from zero, run `docker volume rm infra-demo-data`.
 
@@ -50,3 +51,12 @@ just fix    # fix formatting and lint where possible
 ```
 
 CI runs `just check` on every pull request and on pushes to `main`.
+
+## Published image
+
+On every push to `main`, CI publishes the image to ghcr.io with two tags:
+
+- `ghcr.io/inglesp/infra-demo:latest`
+- `ghcr.io/inglesp/infra-demo:sha-<commit>`, where `<commit>` is the full commit SHA
+
+On pull requests, CI builds the image but doesn't publish it.
