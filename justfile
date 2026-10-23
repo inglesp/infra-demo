@@ -23,7 +23,7 @@ fix:
 
 # Build the container image
 docker-build:
-    docker build -t infra-demo .
+    docker build -t infra-demo --build-arg GIT_COMMIT=$(git rev-parse HEAD) .
 
 # Run the app in a container, keeping its data in the infra-demo-data volume
 docker-run: docker-build
