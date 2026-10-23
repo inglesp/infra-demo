@@ -1,8 +1,9 @@
-.git
-.github
-.venv
-__pycache__
-db.sqlite3
-commit-message.txt
-validation-instructions.txt
-pr-description.txt
+# Exclude everything, then include only what the image needs. A new top-level
+# file or directory that the app needs must be added here.
+*
+!pyproject.toml
+!uv.lock
+!manage.py
+!config/
+!counter/
+**/__pycache__
