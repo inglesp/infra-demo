@@ -1,6 +1,7 @@
-- name: Install Docker
+# jq is for the deploy script
+- name: Install Docker and jq
   ansible.builtin.apt:
-    name: docker.io
+    name: [docker.io, jq]
     update_cache: true
     # Don't refresh a cache that's under an hour old, so reruns change nothing
     cache_valid_time: 3600
@@ -22,14 +23,26 @@
     enabled: true
     state: started
 
+- name: Add the key that signs Dokku's apt repository
+  ansible.builtin.get_url:
+    url: https://packagecloud.io/dokku/dokku/gpgkey
+    dest: /etc/apt/keyrings/dokku.asc
+    mode: "0644"
+  register: dokku_repo_key
+
+# Written as a file, rather than with deb822_repository, because different
+# versions of that module order the fields differently. Push mode and pull mode
+# use different versions, so they'd keep rewriting each other's file.
 - name: Add Dokku's apt repository
-  ansible.builtin.deb822_repository:
-    name: dokku
-    types: deb
-    uris: https://packagecloud.io/dokku/dokku/ubuntu/
-    suites: "{{ ansible_facts['distribution_release'] }}"
-    components: main
-    signed_by: https://packagecloud.io/dokku/dokku/gpgkey
+  ansible.builtin.copy:
+    content: |
+      Types: deb
+      URIs: https://packagecloud.io/dokku/dokku/ubuntu/
+      Suites: {{ ansible_facts['distribution_release'] }}
+      Components: main
+      Signed-By: /etc/apt/keyrings/dokku.asc
+    dest: /etc/apt/sources.list.d/dokku.sources
+    mode: "0644"
   register: dokku_repo
 
 # The cache was probably refreshed above, so cache_valid_time wouldn't refresh
@@ -37,7 +50,7 @@
 - name: Update the apt cache for Dokku's repository
   ansible.builtin.apt:
     update_cache: true
-  when: dokku_repo.changed
+  when: dokku_repo_key.changed or dokku_repo.changed
 
 # skip_key_file: we don't deploy with `git push`, so Dokku needs no SSH key
 # web_config: don't serve Dokku's old web-based setup page
@@ -142,23 +155,6 @@
   ansible.builtin.command: dokku ports:set {{ app_name }} {{ app_ports | join(" ") }}
   when: dokku_app_ports is skipped or dokku_app_ports.stdout.split() != app_ports
 
-- name: Check whether the app has been deployed
-  ansible.builtin.command: dokku ps:report {{ app_name }} --deployed
-  register: dokku_app_deployed
-  changed_when: false
-  check_mode: false
-  when: app_name in dokku_apps.stdout_lines
-
-# Let's Encrypt checks the domain by fetching a file from the app over HTTP, so
-# this waits until the app has been deployed. On a new droplet, that means the
-# first `just configure` after the first deploy.
-- name: Enable letsencrypt for the app
-  ansible.builtin.command: dokku letsencrypt:enable {{ app_name }}
-  when: >-
-    dokku_app_deployed is not skipped
-    and dokku_app_deployed.stdout == "true"
-    and letsencrypt_active.stdout != "true"
-
 - name: Read the app's storage mounts
   ansible.builtin.command: dokku --quiet storage:list {{ app_name }}
   register: dokku_app_storage
@@ -236,6 +232,14 @@
     group: "{{ app_uid }}"
     mode: "0755"
 
+# The deploy script reads this when it runs, so a change takes effect on its
+# next run
+- name: Set the image to deploy
+  ansible.builtin.copy:
+    content: "{{ image }}:{{ image_tag }}\n"
+    dest: /etc/web-app/image
+    mode: "0644"
+
 - name: Install the deploy script
   ansible.builtin.copy:
     src: deploy
@@ -243,8 +247,8 @@
     mode: "0755"
 
 - name: Install the deploy service
-  ansible.builtin.template:
-    src: deploy.service.j2
+  ansible.builtin.copy:
+    src: deploy.service
     dest: /etc/systemd/system/deploy.service
     mode: "0644"
   notify: Reload systemd
