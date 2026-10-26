@@ -1,10 +1,10 @@
 #!/bin/bash
-# Deploy an image to a Dokku app, if it differs from what's deployed.
-# Usage: deploy <app> <image:tag>
+# Deploy the app's image to Dokku, if it differs from what's deployed. The app
+# and image are read from files that Ansible writes.
 set -euo pipefail
 
-app=$1
-image=$2
+app=$(jq -r .app_name /etc/web-app/vars.json)
+image=$(cat /etc/web-app/image)
 
 docker pull --quiet "$image" > /dev/null
 digest=$(docker image inspect --format '{{index .RepoDigests 0}}' "$image")

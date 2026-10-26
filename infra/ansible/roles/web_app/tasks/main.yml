@@ -1,6 +1,7 @@
-- name: Install Docker
+# jq is for the deploy script
+- name: Install Docker and jq
   ansible.builtin.apt:
-    name: docker.io
+    name: [docker.io, jq]
     update_cache: true
     # Don't refresh a cache that's under an hour old, so reruns change nothing
     cache_valid_time: 3600
@@ -236,6 +237,14 @@
     group: "{{ app_uid }}"
     mode: "0755"
 
+# The deploy script reads this when it runs, so a change takes effect on its
+# next run
+- name: Set the image to deploy
+  ansible.builtin.copy:
+    content: "{{ image }}:{{ image_tag }}\n"
+    dest: /etc/web-app/image
+    mode: "0644"
+
 - name: Install the deploy script
   ansible.builtin.copy:
     src: deploy
@@ -243,8 +252,8 @@
     mode: "0755"
 
 - name: Install the deploy service
-  ansible.builtin.template:
-    src: deploy.service.j2
+  ansible.builtin.copy:
+    src: deploy.service
     dest: /etc/systemd/system/deploy.service
     mode: "0644"
   notify: Reload systemd

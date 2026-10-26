@@ -136,8 +136,8 @@ The inventory comes from OpenTofu's `ansible_inventory` output, so run `just app
 
 ### Deploys
 
-Each app's image and tag are set in `infra/ansible/host_vars/<app>.yml`.
-Every minute, a systemd timer on the droplet starts the `deploy` service, which pulls the image, and deploys it by digest if the digest differs from the one Dokku last deployed.
+Each app's image and tag are set in `infra/ansible/host_vars/<app>.yml`, which Ansible writes to `/etc/web-app/image` on the droplet.
+Every minute, a systemd timer on the droplet starts the `deploy` service, which pulls that image, and deploys it by digest if the digest differs from the one Dokku last deployed.
 So a change merged to `main` goes live within a couple of minutes of CI publishing its image.
 To deploy straight away, run `systemctl start deploy` on the droplet.
 Its output is in `journalctl -u deploy`.
