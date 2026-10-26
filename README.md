@@ -148,6 +148,15 @@ To edit an app's secrets in `$EDITOR`, creating the file if needed:
 just vault-edit infra-demo
 ```
 
+To give the app a secret environment variable, add it under `app_secret_env` in the vault:
+
+```yaml
+app_secret_env:
+  SOME_API_KEY: ...
+```
+
+Removing a variable from the vault doesn't remove it from the app: run `dokku config:unset <app> <variable>` on the droplet.
+
 ### Deploys
 
 Each app's image and tag are set in `infra/ansible/host_vars/<app>/main.yml`, which Ansible writes to `/etc/web-app/image` on the droplet.
