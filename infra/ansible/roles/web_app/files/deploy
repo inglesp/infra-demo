@@ -1,6 +1,7 @@
 #!/bin/bash
-# Deploy the app's image to Dokku, if it differs from what's deployed. The app
-# and image are read from files that Ansible writes.
+# Deploy the app's image to Dokku, if it differs from what's deployed, and then
+# make sure TLS is enabled. The app and image are read from files that Ansible
+# writes.
 set -euo pipefail
 
 app=$(jq -r .app_name /etc/web-app/vars.json)
@@ -13,4 +14,10 @@ deployed=$(dokku git:report "$app" --git-source-image)
 if [ "$digest" != "$deployed" ]; then
     # Deploy by digest, so Dokku records exactly which build is running
     dokku git:from-image "$app" "$digest"
+fi
+
+# Let's Encrypt checks the domain by fetching a file from the app over HTTP, so
+# this needs the app to have been deployed
+if [ "$(dokku letsencrypt:report "$app" --letsencrypt-active)" != "true" ]; then
+    dokku letsencrypt:enable "$app"
 fi

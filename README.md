@@ -120,7 +120,7 @@ It blocks containers from DigitalOcean's metadata service, which serves the drop
 DigitalOcean mounts a newly attached volume under `/mnt/` itself, and Ansible removes that mount.
 It also creates the app in Dokku, routes ports 80 and 443 to it, and sets its domain and its environment (from `app_env` in the `web_app` role's defaults).
 It mounts the volume into the app's container at `/data`, so the app's database lives on the volume.
-Once the app has been deployed, it gets a TLS certificate from Let's Encrypt, which the cron job renews.
+Once the app has been deployed, the deploy service (see [Deploys](#deploys)) gets it a TLS certificate from Let's Encrypt, which the cron job renews.
 HTTP then redirects to HTTPS, and Dokku turns on HSTS, so browsers that have visited will only use HTTPS for the domain.
 
 Dokku has no declarative config, only commands, so Ansible reads each Dokku setting first and only runs a command when the setting differs.
@@ -138,6 +138,7 @@ The inventory comes from OpenTofu's `ansible_inventory` output, so run `just app
 
 Each app's image and tag are set in `infra/ansible/host_vars/<app>.yml`, which Ansible writes to `/etc/web-app/image` on the droplet.
 Every minute, a systemd timer on the droplet starts the `deploy` service, which pulls that image, and deploys it by digest if the digest differs from the one Dokku last deployed.
+It then enables TLS for the app, if it isn't already enabled.
 So a change merged to `main` goes live within a couple of minutes of CI publishing its image.
 To deploy straight away, run `systemctl start deploy` on the droplet.
 Its output is in `journalctl -u deploy`.
@@ -160,7 +161,7 @@ ssh-keygen -R infra-demo.opensafely.org
 ssh-keygen -R <old IP address>
 ```
 
-Then run `just configure`, wait a minute for the deploy timer to deploy the app, and run `just configure` again, to enable TLS.
+Then run `just configure`. Within a minute, the deploy timer deploys the app and enables TLS.
 Ansible connects to the new IP address, but the DNS records can take up to 30 minutes to point at it everywhere.
 
 ### Roll back to an earlier build

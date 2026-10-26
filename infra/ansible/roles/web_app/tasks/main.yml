@@ -143,23 +143,6 @@
   ansible.builtin.command: dokku ports:set {{ app_name }} {{ app_ports | join(" ") }}
   when: dokku_app_ports is skipped or dokku_app_ports.stdout.split() != app_ports
 
-- name: Check whether the app has been deployed
-  ansible.builtin.command: dokku ps:report {{ app_name }} --deployed
-  register: dokku_app_deployed
-  changed_when: false
-  check_mode: false
-  when: app_name in dokku_apps.stdout_lines
-
-# Let's Encrypt checks the domain by fetching a file from the app over HTTP, so
-# this waits until the app has been deployed. On a new droplet, that means the
-# first `just configure` after the first deploy.
-- name: Enable letsencrypt for the app
-  ansible.builtin.command: dokku letsencrypt:enable {{ app_name }}
-  when: >-
-    dokku_app_deployed is not skipped
-    and dokku_app_deployed.stdout == "true"
-    and letsencrypt_active.stdout != "true"
-
 - name: Read the app's storage mounts
   ansible.builtin.command: dokku --quiet storage:list {{ app_name }}
   register: dokku_app_storage
