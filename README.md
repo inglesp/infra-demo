@@ -114,6 +114,7 @@ State isn't locked, so only one person should run `just apply` at a time.
 What runs on each droplet is configured with [Ansible](https://docs.ansible.com/), in `infra/ansible/`.
 Each droplet configures itself: every minute, before deploying (see [Deploys](#deploys)), it runs `ansible-pull`, which applies the playbook from `main` if `main` has changed since the last run.
 So a change merged to `main` is applied within a minute or so.
+If applying the playbook fails, the next run tries again.
 Ansible can also be run from your machine, over SSH as root, with `just configure`, for example to try out a branch before merging it.
 The droplet doesn't apply `main` again until `main` next changes.
 
