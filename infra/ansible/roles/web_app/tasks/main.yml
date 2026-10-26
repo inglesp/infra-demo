@@ -239,17 +239,19 @@
     mode: "0600"
   no_log: true
 
-- name: Install the alert script
+- name: Install the alert scripts
   ansible.builtin.copy:
-    src: notify-failure
-    dest: /usr/local/bin/notify-failure
+    src: "{{ item }}"
+    dest: /usr/local/bin/{{ item }}
     mode: "0755"
+  loop: [notify-failure, notify-recovery]
 
-- name: Install the alert service
+- name: Install the alert services
   ansible.builtin.copy:
-    src: notify-failure@.service
-    dest: /etc/systemd/system/notify-failure@.service
+    src: "{{ item }}"
+    dest: /etc/systemd/system/{{ item }}
     mode: "0644"
+  loop: [notify-failure@.service, notify-recovery@.service]
   notify: Reload systemd
 
 # The deploy script reads this when it runs, so a change takes effect on its
