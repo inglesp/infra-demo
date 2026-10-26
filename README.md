@@ -107,7 +107,7 @@ It needs no credentials, and CI runs it on every pull request and on pushes to `
 OpenTofu's state is kept in the `inglesp-infra-demo-tofu-state` Spaces bucket, in `lon1`.
 The bucket was created by hand, since it can't hold its own state.
 The state is encrypted with the state passphrase: if the passphrase is lost, so is the state.
-The state holds secrets, such as each app's Django secret key, which OpenTofu generates and passes to Ansible in the inventory.
+The state holds secrets, such as each app's Django secret key, which OpenTofu generates and puts in the droplet's `user_data`.
 State isn't locked, so only one person should run `just apply` at a time.
 
 ## Server configuration
@@ -116,8 +116,7 @@ What runs on each droplet is configured with [Ansible](https://docs.ansible.com/
 Each droplet configures itself: every minute, before deploying (see [Deploys](#deploys)), it runs `ansible-pull`, which applies the playbook from `main` if `main` has changed since the last run.
 So a change merged to `main` is applied within a minute or so.
 If applying the playbook fails, the run still deploys the image, but shows as a failed `deploy` unit, and the next run tries the playbook again.
-Ansible can also be run from your machine, over SSH as root, with `just configure`, for example to try out a branch before merging it.
-The droplet doesn't apply `main` again until `main` next changes.
+That's the only way config reaches a droplet.
 
 At the moment, Ansible installs Docker, [Dokku](https://dokku.com/) and Dokku's [letsencrypt plugin](https://github.com/dokku/dokku-letsencrypt) (setting its email and adding its renewal cron job), and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
 The mount point is owned by UID 10001, which the app runs as in its image.
@@ -129,15 +128,6 @@ Once the app has been deployed, the deploy service (see [Deploys](#deploys)) get
 HTTP then redirects to HTTPS, and Dokku turns on HSTS, so browsers that have visited will only use HTTPS for the domain.
 
 Dokku has no declarative config, only commands, so Ansible reads each Dokku setting first and only runs a command when the setting differs.
-Ansible doesn't run commands in check mode, so with `--check`, a Dokku command that would run shows as `skipping`.
-
-```sh
-just configure --check --diff  # show what would change
-just configure                 # make the changes
-```
-
-uv installs Ansible the first time you run `just configure`.
-The inventory comes from OpenTofu's `ansible_inventory` output, so run `just apply` first if a droplet has changed.
 
 ### Secrets
 
@@ -203,5 +193,3 @@ The DNS records can take up to 30 minutes to point at the new IP address everywh
 Set `image_tag` in `infra/ansible/host_vars/<app>/main.yml` to `sha-<commit>`, where `<commit>` is the full SHA of a commit on `main`, and merge the change.
 Within a minute or so, the droplet applies and deploys it.
 Set it back to `latest`, and merge that, to return to deploying each new build.
-
-In a hurry, `just configure` from the branch applies the change straight away, and the deploy timer then deploys it.

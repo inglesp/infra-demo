@@ -15,7 +15,7 @@ For the last commit of a PR with multiple commits, or of any PR that changes Ope
 
 * pr-description.txt, containing a PR title and description covering the whole PR
 
-PR descriptions don't include command output (such as `just plan` or `just configure --check --diff`), and validation instructions don't ask for it to be kept.
+PR descriptions don't include command output (such as `just plan`), and validation instructions don't ask for it to be kept.
 
 These files are overwritten each time and are gitignored.
 
