@@ -24,7 +24,7 @@ just docker-run
 
 Then open http://localhost:8000.
 This builds the image and runs it with gunicorn, applying migrations first.
-The page shows the commit the image was built from.
+The page shows the commit the image was built from, and the value of `DEMO_SECRET`, a secret with no use, which shows that secrets reach the app.
 `/health/` returns `ok` for health checks, whatever the request's `Host` header.
 Dokku uses it, as set in `app.json`, to check that a new container is healthy before switching traffic to it.
 The visit count is stored in the `infra-demo-data` Docker volume, so it survives restarts.
@@ -40,6 +40,7 @@ The app is configured with environment variables:
 | `DJANGO_SECRET_KEY` | required, unless in debug mode | |
 | `DJANGO_ALLOWED_HOSTS` | none | Comma-separated; in debug mode, localhost is always allowed |
 | `DATABASE_PATH` | `db.sqlite3` | Path to the SQLite database |
+| `DEMO_SECRET` | none | A secret with no use, which the page shows |
 
 `just run` and `just test` set `DJANGO_DEBUG=1` for you.
 If you run `manage.py` or `pytest` directly, set it yourself.
@@ -138,9 +139,28 @@ just configure                 # make the changes
 uv installs Ansible the first time you run `just configure`.
 The inventory comes from OpenTofu's `ansible_inventory` output, so run `just apply` first if a droplet has changed.
 
+### Secrets
+
+Secrets that OpenTofu doesn't generate are kept in the repo, encrypted with [ansible-vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html), in `infra/ansible/host_vars/<app>/vault.yml`.
+Each app's vault has its own password, which OpenTofu generates, and which is on the app's droplet, so the droplet can decrypt it.
+To edit an app's secrets in `$EDITOR`, creating the file if needed:
+
+```sh
+just vault-edit infra-demo
+```
+
+To give the app a secret environment variable, add it under `app_secret_env` in the vault:
+
+```yaml
+app_secret_env:
+  SOME_API_KEY: ...
+```
+
+Removing a variable from the vault doesn't remove it from the app: run `dokku config:unset <app> <variable>` on the droplet.
+
 ### Deploys
 
-Each app's image and tag are set in `infra/ansible/host_vars/<app>.yml`, which Ansible writes to `/etc/web-app/image` on the droplet.
+Each app's image and tag are set in `infra/ansible/host_vars/<app>/main.yml`, which Ansible writes to `/etc/web-app/image` on the droplet.
 Every minute, a systemd timer on the droplet starts the `deploy` service, which first applies any changes to `main` with `ansible-pull`.
 It then pulls the image, and deploys it by digest if the digest differs from the one Dokku last deployed.
 It then enables TLS for the app, if it isn't already enabled.
@@ -172,7 +192,7 @@ The DNS records can take up to 30 minutes to point at the new IP address everywh
 
 ### Roll back to an earlier build
 
-Set `image_tag` in `infra/ansible/host_vars/<app>.yml` to `sha-<commit>`, where `<commit>` is the full SHA of a commit on `main`, and merge the change.
+Set `image_tag` in `infra/ansible/host_vars/<app>/main.yml` to `sha-<commit>`, where `<commit>` is the full SHA of a commit on `main`, and merge the change.
 Within a minute or so, the droplet applies and deploys it.
 Set it back to `latest`, and merge that, to return to deploying each new build.
 

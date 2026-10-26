@@ -17,6 +17,9 @@ app_env:
   DJANGO_ALLOWED_HOSTS: "{{ domain }}"
   DJANGO_SECRET_KEY: "{{ secret_key }}"
 
+# Secret environment variables for the app, set in host_vars/<app>/vault.yml
+app_secret_env: {}
+
 # The UID the app runs as in its image (see the Dockerfile)
 app_uid: 10001
 

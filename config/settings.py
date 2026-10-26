@@ -45,6 +45,10 @@ DATABASES = {
 
 GIT_COMMIT = os.environ.get("GIT_COMMIT", "unknown")
 
+# A secret with no use, which the page shows, to show that secrets reach the
+# app. Never show a real secret like this.
+DEMO_SECRET = os.environ.get("DEMO_SECRET", "")
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 USE_TZ = True

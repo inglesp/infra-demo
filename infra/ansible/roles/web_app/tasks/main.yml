@@ -181,7 +181,7 @@
 - name: Set the app's environment
   ansible.builtin.command:
     argv: [dokku, config:set, "{{ app_name }}", "{{ item.key }}={{ item.value }}"]
-  loop: "{{ app_env | dict2items }}"
+  loop: "{{ app_env | combine(app_secret_env) | dict2items }}"
   when: dokku_config is skipped or (dokku_config.stdout | from_json).get(item.key) != item.value
   no_log: true
 
