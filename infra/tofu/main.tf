@@ -2,6 +2,10 @@ locals {
   # The name of an SSH key uploaded to DigitalOcean, which can log in as root
   ssh_key_name = "inglesp"
 
+  # Where droplets fetch their configuration from
+  repo_url    = "https://github.com/inglesp/infra-demo.git"
+  repo_branch = "main"
+
   # One droplet per app
   apps = {
     infra-demo = {
@@ -27,6 +31,8 @@ module "web_app" {
   volume_size = each.value.volume_size
   domain      = each.value.domain
   ssh_key_ids = [data.digitalocean_ssh_key.admin.id]
+  repo_url    = local.repo_url
+  repo_branch = local.repo_branch
 }
 
 output "ips" {
