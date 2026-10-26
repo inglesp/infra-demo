@@ -168,6 +168,12 @@ So a change merged to `main` goes live within a couple of minutes of CI publishi
 To deploy straight away, run `systemctl start deploy` on the droplet.
 Its output is in `journalctl -u deploy`.
 
+### Alerts
+
+If the deploy service fails, the droplet posts the end of its log to a Slack channel, through an [incoming webhook](https://api.slack.com/messaging/webhooks), which belongs to a Slack app created at https://api.slack.com/apps.
+The webhook's URL is a secret, set as `alert_webhook_url` in the app's vault.
+To send a test alert, run `systemctl start notify-failure@deploy.service` on the droplet.
+
 ## Runbook
 
 ### SSH into a droplet

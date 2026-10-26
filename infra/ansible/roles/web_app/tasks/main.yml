@@ -232,6 +232,26 @@
     group: "{{ app_uid }}"
     mode: "0755"
 
+- name: Set the alert webhook
+  ansible.builtin.copy:
+    content: "{{ alert_webhook_url }}"
+    dest: /etc/web-app/alert-webhook
+    mode: "0600"
+  no_log: true
+
+- name: Install the alert script
+  ansible.builtin.copy:
+    src: notify-failure
+    dest: /usr/local/bin/notify-failure
+    mode: "0755"
+
+- name: Install the alert service
+  ansible.builtin.copy:
+    src: notify-failure@.service
+    dest: /etc/systemd/system/notify-failure@.service
+    mode: "0644"
+  notify: Reload systemd
+
 # The deploy script reads this when it runs, so a change takes effect on its
 # next run
 - name: Set the image to deploy
