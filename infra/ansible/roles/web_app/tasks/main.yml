@@ -23,14 +23,26 @@
     enabled: true
     state: started
 
+- name: Add the key that signs Dokku's apt repository
+  ansible.builtin.get_url:
+    url: https://packagecloud.io/dokku/dokku/gpgkey
+    dest: /etc/apt/keyrings/dokku.asc
+    mode: "0644"
+  register: dokku_repo_key
+
+# Written as a file, rather than with deb822_repository, because different
+# versions of that module order the fields differently. Push mode and pull mode
+# use different versions, so they'd keep rewriting each other's file.
 - name: Add Dokku's apt repository
-  ansible.builtin.deb822_repository:
-    name: dokku
-    types: deb
-    uris: https://packagecloud.io/dokku/dokku/ubuntu/
-    suites: "{{ ansible_facts['distribution_release'] }}"
-    components: main
-    signed_by: https://packagecloud.io/dokku/dokku/gpgkey
+  ansible.builtin.copy:
+    content: |
+      Types: deb
+      URIs: https://packagecloud.io/dokku/dokku/ubuntu/
+      Suites: {{ ansible_facts['distribution_release'] }}
+      Components: main
+      Signed-By: /etc/apt/keyrings/dokku.asc
+    dest: /etc/apt/sources.list.d/dokku.sources
+    mode: "0644"
   register: dokku_repo
 
 # The cache was probably refreshed above, so cache_valid_time wouldn't refresh
@@ -38,7 +50,7 @@
 - name: Update the apt cache for Dokku's repository
   ansible.builtin.apt:
     update_cache: true
-  when: dokku_repo.changed
+  when: dokku_repo_key.changed or dokku_repo.changed
 
 # skip_key_file: we don't deploy with `git push`, so Dokku needs no SSH key
 # web_config: don't serve Dokku's old web-based setup page

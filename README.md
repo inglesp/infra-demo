@@ -75,8 +75,7 @@ Changing a droplet's image or SSH keys only affects new droplets, rather than re
 Each droplet has a cloud firewall that allows inbound SSH, HTTP, HTTPS and ICMP, and all outbound traffic.
 Each app also has its own DNS zone in DigitalOcean, such as `infra-demo.opensafely.org`, with A and AAAA records pointing at its droplet.
 
-At a droplet's first boot, cloud-init writes its settings and secrets to `/etc/web-app/`, installs Ansible, and runs `ansible-pull` against `main` of this repo.
-For now, `ansible-pull` runs no tasks.
+At a droplet's first boot, cloud-init writes its settings and secrets to `/etc/web-app/`, installs Ansible, and runs `ansible-pull` against `main` of this repo, which configures the droplet (see [Server configuration](#server-configuration)).
 Changing the cloud-init config (the droplet's `user_data`) replaces the droplet: see [After a droplet is replaced](#after-a-droplet-is-replaced).
 
 You need:
@@ -113,8 +112,12 @@ State isn't locked, so only one person should run `just apply` at a time.
 ## Server configuration
 
 What runs on each droplet is configured with [Ansible](https://docs.ansible.com/), in `infra/ansible/`.
-Ansible runs from your machine, over SSH as root.
-At the moment, it installs Docker, [Dokku](https://dokku.com/) and Dokku's [letsencrypt plugin](https://github.com/dokku/dokku-letsencrypt) (setting its email and adding its renewal cron job), and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
+Each droplet configures itself: every minute, before deploying (see [Deploys](#deploys)), it runs `ansible-pull`, which applies the playbook from `main` if `main` has changed since the last run.
+So a change merged to `main` is applied within a minute or so.
+Ansible can also be run from your machine, over SSH as root, with `just configure`, for example to try out a branch before merging it.
+The droplet doesn't apply `main` again until `main` next changes.
+
+At the moment, Ansible installs Docker, [Dokku](https://dokku.com/) and Dokku's [letsencrypt plugin](https://github.com/dokku/dokku-letsencrypt) (setting its email and adding its renewal cron job), and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
 The mount point is owned by UID 10001, which the app runs as in its image.
 It blocks containers from DigitalOcean's metadata service, which serves the droplet's `user_data`, and so its secrets, to anything on the droplet that asks.
 DigitalOcean mounts a newly attached volume under `/mnt/` itself, and Ansible removes that mount.
@@ -137,9 +140,10 @@ The inventory comes from OpenTofu's `ansible_inventory` output, so run `just app
 ### Deploys
 
 Each app's image and tag are set in `infra/ansible/host_vars/<app>.yml`, which Ansible writes to `/etc/web-app/image` on the droplet.
-Every minute, a systemd timer on the droplet starts the `deploy` service, which pulls that image, and deploys it by digest if the digest differs from the one Dokku last deployed.
+Every minute, a systemd timer on the droplet starts the `deploy` service, which first applies any changes to `main` with `ansible-pull`.
+It then pulls the image, and deploys it by digest if the digest differs from the one Dokku last deployed.
 It then enables TLS for the app, if it isn't already enabled.
-So a change merged to `main` goes live within a couple of minutes of CI publishing its image.
+So a change merged to `main` goes live within a couple of minutes of CI publishing its image, and a change to the image or tag is applied and deployed in the same run.
 To deploy straight away, run `systemctl start deploy` on the droplet.
 Its output is in `journalctl -u deploy`.
 
@@ -161,16 +165,14 @@ ssh-keygen -R infra-demo.opensafely.org
 ssh-keygen -R <old IP address>
 ```
 
-Then run `just configure`. Within a minute, the deploy timer deploys the app and enables TLS.
-Ansible connects to the new IP address, but the DNS records can take up to 30 minutes to point at it everywhere.
+The new droplet configures itself at first boot, which takes a few minutes, and within a minute after that, deploys the app and enables TLS.
+`cloud-init status --wait` on the droplet waits for the first boot to finish.
+The DNS records can take up to 30 minutes to point at the new IP address everywhere.
 
 ### Roll back to an earlier build
 
-Set `image_tag` in `infra/ansible/host_vars/<app>.yml` to `sha-<commit>`, where `<commit>` is the full SHA of a commit on `main`. Then:
+Set `image_tag` in `infra/ansible/host_vars/<app>.yml` to `sha-<commit>`, where `<commit>` is the full SHA of a commit on `main`, and merge the change.
+Within a minute or so, the droplet applies and deploys it.
+Set it back to `latest`, and merge that, to return to deploying each new build.
 
-```sh
-just configure
-```
-
-The next run of the deploy timer, within a minute, deploys it.
-Set it back to `latest` to return to deploying each new build.
+In a hurry, `just configure` from the branch applies the change straight away, and the deploy timer then deploys it.
