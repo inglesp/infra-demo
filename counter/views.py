@@ -8,7 +8,7 @@ def index(request):
     Visit.objects.create()
     count = Visit.objects.count()
     return HttpResponse(
-        f"This page has been visited {count} times.\n"
+        f"Visit count: {count}\n"
         f"Build: {settings.GIT_COMMIT}\n"
         f"Secret: {settings.DEMO_SECRET or 'not set'}\n",
         content_type="text/plain",
