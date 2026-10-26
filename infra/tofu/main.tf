@@ -40,6 +40,12 @@ output "ips" {
   value       = { for name, app in module.web_app : name => app.ipv4_address }
 }
 
+output "vault_passwords" {
+  description = "Each app's password for its secrets, encrypted with ansible-vault"
+  value       = { for name, app in module.web_app : name => app.vault_password }
+  sensitive   = true
+}
+
 output "ansible_inventory" {
   description = "Ansible inventory, as JSON, for just configure"
   # It includes each app's secret key

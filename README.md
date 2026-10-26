@@ -138,9 +138,19 @@ just configure                 # make the changes
 uv installs Ansible the first time you run `just configure`.
 The inventory comes from OpenTofu's `ansible_inventory` output, so run `just apply` first if a droplet has changed.
 
+### Secrets
+
+Secrets that OpenTofu doesn't generate are kept in the repo, encrypted with [ansible-vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html), in `infra/ansible/host_vars/<app>/vault.yml`.
+Each app's vault has its own password, which OpenTofu generates, and which is on the app's droplet, so the droplet can decrypt it.
+To edit an app's secrets in `$EDITOR`, creating the file if needed:
+
+```sh
+just vault-edit infra-demo
+```
+
 ### Deploys
 
-Each app's image and tag are set in `infra/ansible/host_vars/<app>.yml`, which Ansible writes to `/etc/web-app/image` on the droplet.
+Each app's image and tag are set in `infra/ansible/host_vars/<app>/main.yml`, which Ansible writes to `/etc/web-app/image` on the droplet.
 Every minute, a systemd timer on the droplet starts the `deploy` service, which first applies any changes to `main` with `ansible-pull`.
 It then pulls the image, and deploys it by digest if the digest differs from the one Dokku last deployed.
 It then enables TLS for the app, if it isn't already enabled.
@@ -172,7 +182,7 @@ The DNS records can take up to 30 minutes to point at the new IP address everywh
 
 ### Roll back to an earlier build
 
-Set `image_tag` in `infra/ansible/host_vars/<app>.yml` to `sha-<commit>`, where `<commit>` is the full SHA of a commit on `main`, and merge the change.
+Set `image_tag` in `infra/ansible/host_vars/<app>/main.yml` to `sha-<commit>`, where `<commit>` is the full SHA of a commit on `main`, and merge the change.
 Within a minute or so, the droplet applies and deploys it.
 Set it back to `latest`, and merge that, to return to deploying each new build.
 

@@ -14,6 +14,12 @@ output "secret_key" {
   sensitive   = true
 }
 
+output "vault_password" {
+  description = "The password for the app's secrets, encrypted with ansible-vault"
+  value       = random_password.vault_password.result
+  sensitive   = true
+}
+
 output "volume_name" {
   description = "The name of the droplet's data volume"
   value       = digitalocean_volume.data.name
