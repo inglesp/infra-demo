@@ -31,8 +31,8 @@
   register: dokku_repo_key
 
 # Written as a file, rather than with deb822_repository, because different
-# versions of that module order the fields differently. Push mode and pull mode
-# use different versions, so they'd keep rewriting each other's file.
+# versions of that module order the fields differently, so the file would
+# change whenever Ubuntu's ansible package did.
 - name: Add Dokku's apt repository
   ansible.builtin.copy:
     content: |

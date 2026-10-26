@@ -45,21 +45,3 @@ output "vault_passwords" {
   value       = { for name, app in module.web_app : name => app.vault_password }
   sensitive   = true
 }
-
-output "ansible_inventory" {
-  description = "Ansible inventory, as JSON, for just configure"
-  # It includes each app's secret key
-  sensitive = true
-  value = {
-    all = {
-      hosts = {
-        for name, app in module.web_app : name => {
-          ansible_host = app.ipv4_address
-          domain       = app.domain
-          secret_key   = app.secret_key
-          volume_name  = app.volume_name
-        }
-      }
-    }
-  }
-}

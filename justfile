@@ -50,30 +50,12 @@ check-infra:
     just tofu validate
     cd infra/ansible && uv run --group infra ansible-playbook --syntax-check -i localhost, playbook.yml
 
-# Configure the droplets with Ansible, e.g. `just configure --check --diff`
-configure *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    # The inventory and vault passwords are secrets. mktemp makes the directory
-    # readable only by you, and it's deleted on exit.
-    tmp=$(mktemp -d)
-    trap 'rm -rf "$tmp"' EXIT
-    just tofu output -json ansible_inventory > "$tmp/inventory.json"
-    # Each app's vault is encrypted with its own password, labelled with the
-    # app's name
-    just tofu output -json vault_passwords > "$tmp/vault-passwords.json"
-    vault_ids=()
-    for app in $(jq -r 'keys[]' "$tmp/vault-passwords.json"); do
-        jq -r --arg app "$app" '.[$app]' "$tmp/vault-passwords.json" > "$tmp/$app"
-        vault_ids+=(--vault-id "$app@$tmp/$app")
-    done
-    cd infra/ansible
-    uv run --group infra ansible-playbook -i "$tmp/inventory.json" "${vault_ids[@]}" playbook.yml {{args}}
-
 # Edit an app's secrets, in host_vars/<app>/vault.yml, creating the file if needed
 vault-edit app:
     #!/usr/bin/env bash
     set -euo pipefail
+    # The password is a secret. mktemp makes the directory readable only by
+    # you, and it's deleted on exit.
     tmp=$(mktemp -d)
     trap 'rm -rf "$tmp"' EXIT
     # -e fails if there's no such app, rather than using "null" as the password
