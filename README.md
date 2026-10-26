@@ -75,6 +75,10 @@ Changing a droplet's image or SSH keys only affects new droplets, rather than re
 Each droplet has a cloud firewall that allows inbound SSH, HTTP, HTTPS and ICMP, and all outbound traffic.
 Each app also has its own DNS zone in DigitalOcean, such as `infra-demo.opensafely.org`, with A and AAAA records pointing at its droplet.
 
+At a droplet's first boot, cloud-init writes its settings and secrets to `/etc/web-app/`, installs Ansible, and runs `ansible-pull` against `main` of this repo.
+For now, `ansible-pull` runs no tasks.
+Changing the cloud-init config (the droplet's `user_data`) replaces the droplet: see [After a droplet is replaced](#after-a-droplet-is-replaced).
+
 You need:
 
 - [OpenTofu](https://opentofu.org/docs/intro/install/), [doctl](https://docs.digitalocean.com/reference/doctl/how-to/install/) and [jq](https://jqlang.org/)
@@ -144,6 +148,19 @@ Its output is in `journalctl -u deploy`.
 ```sh
 ssh root@$(just tofu output -json ips | jq -r '.["infra-demo"]')
 ```
+
+### After a droplet is replaced
+
+The droplet's data is on its volume, which is moved to the new droplet, but everything else needs setting up again.
+The new droplet has a new IP address and new SSH host keys, so first remove the old keys, using the old IP address:
+
+```sh
+ssh-keygen -R infra-demo.opensafely.org
+ssh-keygen -R <old IP address>
+```
+
+Then run `just configure`, wait a minute for the deploy timer to deploy the app, and run `just configure` again, to enable TLS.
+Ansible connects to the new IP address, but the DNS records can take up to 30 minutes to point at it everywhere.
 
 ### Roll back to an earlier build
 

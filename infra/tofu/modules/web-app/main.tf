@@ -9,6 +9,50 @@ terraform {
   }
 }
 
+# cloud-init runs this at the droplet's first boot. It writes the droplet's
+# settings and secrets, installs Ansible, and runs ansible-pull, which only
+# runs tasks tagged ansible_pull.
+locals {
+  user_data = "#cloud-config\n${yamlencode({
+    package_update = true
+    packages       = ["ansible"]
+    write_files = [
+      {
+        path        = "/etc/web-app/vars.json"
+        permissions = "0600"
+        content = jsonencode({
+          app_name    = var.name
+          domain      = var.domain
+          volume_name = digitalocean_volume.data.name
+          secret_key  = random_password.secret_key.result
+          repo_url    = var.repo_url
+          repo_branch = var.repo_branch
+        })
+      },
+      {
+        path        = "/etc/web-app/vault-password"
+        permissions = "0600"
+        content     = random_password.vault_password.result
+      },
+    ]
+    runcmd = [
+      [
+        "ansible-pull",
+        "--url", var.repo_url,
+        "--checkout", var.repo_branch,
+        "--directory", "/var/lib/web-app/repo",
+        # The droplet's name is the app's name, so this loads its host_vars
+        "--inventory", "${var.name},",
+        "--connection", "local",
+        "--extra-vars", "@/etc/web-app/vars.json",
+        "--vault-password-file", "/etc/web-app/vault-password",
+        "--tags", "ansible_pull",
+        "infra/ansible/playbook.yml",
+      ],
+    ]
+  })}"
+}
+
 resource "digitalocean_droplet" "this" {
   name       = var.name
   image      = "ubuntu-24-04-x64"
@@ -17,6 +61,8 @@ resource "digitalocean_droplet" "this" {
   ssh_keys   = var.ssh_key_ids
   ipv6       = true
   volume_ids = [digitalocean_volume.data.id]
+  # Changing this replaces the droplet
+  user_data = local.user_data
 
   lifecycle {
     # Changing either would replace the droplet. A new image only matters
@@ -101,6 +147,14 @@ resource "digitalocean_firewall" "this" {
 # Django's secret key. It's kept in the (encrypted) state, so it stays the same
 # across runs. Alphanumeric, so it never needs quoting.
 resource "random_password" "secret_key" {
+  length  = 64
+  special = false
+}
+
+# The password for secrets encrypted with ansible-vault. Nothing is encrypted
+# yet, but it's in user_data now, so that adding secrets later doesn't mean
+# replacing the droplet.
+resource "random_password" "vault_password" {
   length  = 64
   special = false
 }
