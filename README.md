@@ -116,6 +116,7 @@ What runs on each droplet is configured with [Ansible](https://docs.ansible.com/
 Ansible runs from your machine, over SSH as root.
 At the moment, it installs Docker, [Dokku](https://dokku.com/) and Dokku's [letsencrypt plugin](https://github.com/dokku/dokku-letsencrypt) (setting its email and adding its renewal cron job), and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
 The mount point is owned by UID 10001, which the app runs as in its image.
+It blocks containers from DigitalOcean's metadata service, which serves the droplet's `user_data`, and so its secrets, to anything on the droplet that asks.
 DigitalOcean mounts a newly attached volume under `/mnt/` itself, and Ansible removes that mount.
 It also creates the app in Dokku, routes ports 80 and 443 to it, and sets its domain and its environment (from `app_env` in the `web_app` role's defaults).
 It mounts the volume into the app's container at `/data`, so the app's database lives on the volume.
