@@ -24,7 +24,7 @@ just docker-run
 
 Then open http://localhost:8000.
 This builds the image and runs it with gunicorn, applying migrations first.
-The page shows the commit the image was built from.
+The page shows the commit the image was built from, and the value of `DEMO_SECRET`, a secret with no use, which shows that secrets reach the app.
 `/health/` returns `ok` for health checks, whatever the request's `Host` header.
 Dokku uses it, as set in `app.json`, to check that a new container is healthy before switching traffic to it.
 The visit count is stored in the `infra-demo-data` Docker volume, so it survives restarts.
@@ -40,6 +40,7 @@ The app is configured with environment variables:
 | `DJANGO_SECRET_KEY` | required, unless in debug mode | |
 | `DJANGO_ALLOWED_HOSTS` | none | Comma-separated; in debug mode, localhost is always allowed |
 | `DATABASE_PATH` | `db.sqlite3` | Path to the SQLite database |
+| `DEMO_SECRET` | none | A secret with no use, which the page shows |
 
 `just run` and `just test` set `DJANGO_DEBUG=1` for you.
 If you run `manage.py` or `pytest` directly, set it yourself.
