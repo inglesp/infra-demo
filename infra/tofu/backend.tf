@@ -6,6 +6,10 @@ terraform {
     bucket = "inglesp-infra-demo-tofu-state"
     key    = "infra-demo.tfstate"
 
+    # Lock the state with a lock file next to it, so that two runs can't
+    # change it at once
+    use_lockfile = true
+
     # Required, but ignored by Spaces: the region is in the endpoint
     region = "us-east-1"
 
