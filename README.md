@@ -113,17 +113,20 @@ State isn't locked, so only one person should run `just apply` at a time.
 
 What runs on each droplet is configured with [Ansible](https://docs.ansible.com/), in `infra/ansible/`.
 Each droplet configures itself: every minute, before deploying (see [Deploys](#deploys)), it runs `ansible-pull`, which applies the playbook from `main` if `main` has changed since the last run.
-So a change merged to `main` is applied within a minute or so.
+That's the only way config reaches a droplet, and a change merged to `main` is applied within a minute or so.
 If applying the playbook fails, the run still deploys the image, but shows as a failed `deploy` unit, and the next run tries the playbook again.
-That's the only way config reaches a droplet.
 
-Ansible installs Docker, [Dokku](https://dokku.com/) and Dokku's [letsencrypt plugin](https://github.com/dokku/dokku-letsencrypt) (setting its email and adding its renewal cron job), and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
-The letsencrypt plugin is pinned to a commit, since a tag can be moved, and changing `letsencrypt_plugin_commit` in the `web_app` role's defaults updates it.
-The mount point is owned by UID 10001, which the app runs as in its image.
-It blocks containers from DigitalOcean's metadata service, which serves the droplet's `user_data`, and so its secrets, to anything on the droplet that asks.
-DigitalOcean mounts a newly attached volume under `/mnt/` itself, and Ansible removes that mount.
-It also creates the app in Dokku, routes ports 80 and 443 to it, and sets its domain and its environment (from `app_env` in the `web_app` role's defaults).
-It mounts the volume into the app's container at `/data`, so the app's database lives on the volume.
+The playbook:
+
+- installs Docker, [Dokku](https://dokku.com/) and Dokku's [letsencrypt plugin](https://github.com/dokku/dokku-letsencrypt), and sets the plugin's email and renewal cron job
+- blocks containers from DigitalOcean's metadata service, which serves the droplet's `user_data`, and so its secrets, to anything on the droplet that asks
+- mounts the droplet's volume at `/srv/<app>/data`, owned by UID 10001, which the app runs as, in place of DigitalOcean's own mount under `/mnt/`
+- creates the app in Dokku, and sets its domain, its environment (`app_env` in the `web_app` role's defaults) and its ports
+- mounts the volume into the app's container at `/data`, where the app keeps its database
+- installs the deploy service and the alerts (see below)
+
+The letsencrypt plugin is pinned to a commit, `letsencrypt_plugin_commit` in the role's defaults, and changing that updates it.
+
 Once the app has been deployed, the deploy service (see [Deploys](#deploys)) gets it a TLS certificate from Let's Encrypt, which the cron job renews.
 HTTP then redirects to HTTPS, and Dokku turns on HSTS, so browsers that have visited will only use HTTPS for the domain.
 
