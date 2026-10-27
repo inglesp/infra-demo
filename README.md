@@ -118,6 +118,7 @@ If applying the playbook fails, the run still deploys the image, but shows as a 
 That's the only way config reaches a droplet.
 
 Ansible installs Docker, [Dokku](https://dokku.com/) and Dokku's [letsencrypt plugin](https://github.com/dokku/dokku-letsencrypt) (setting its email and adding its renewal cron job), and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
+The letsencrypt plugin is pinned to a commit, since a tag can be moved, and changing `letsencrypt_plugin_commit` in the `web_app` role's defaults updates it.
 The mount point is owned by UID 10001, which the app runs as in its image.
 It blocks containers from DigitalOcean's metadata service, which serves the droplet's `user_data`, and so its secrets, to anything on the droplet that asks.
 DigitalOcean mounts a newly attached volume under `/mnt/` itself, and Ansible removes that mount.
