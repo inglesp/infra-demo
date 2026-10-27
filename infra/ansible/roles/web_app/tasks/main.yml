@@ -248,8 +248,6 @@
   loop: [notify-failure@.service, notify-recovery@.service]
   notify: Reload systemd
 
-# The deploy script reads this when it runs, so a change takes effect on its
-# next run
 - name: Set the image to deploy
   ansible.builtin.copy:
     content: "{{ image }}:{{ image_tag }}\n"
