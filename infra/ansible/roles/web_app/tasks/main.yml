@@ -72,8 +72,10 @@
     --committish {{ letsencrypt_plugin_commit }} --name letsencrypt
   when: "'letsencrypt' not in dokku_plugins.stdout_lines | map('split') | map('first') | list"
 
+# As dokku, which owns the checkout, since git refuses to read a repository
+# owned by another user
 - name: Read the letsencrypt plugin's commit
-  ansible.builtin.command: git -C /var/lib/dokku/plugins/available/letsencrypt rev-parse HEAD
+  ansible.builtin.command: sudo -u dokku git -C /var/lib/dokku/plugins/available/letsencrypt rev-parse HEAD
   register: letsencrypt_plugin_head
   changed_when: false
 
