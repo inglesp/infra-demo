@@ -65,23 +65,28 @@
   register: dokku_plugins
   changed_when: false
 
-# Each line of plugin:list starts with the plugin's name
-- name: Install Dokku's letsencrypt plugin
-  ansible.builtin.command: >-
-    dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git
-    --committish {{ letsencrypt_plugin_commit }} --name letsencrypt
-  when: "'letsencrypt' not in dokku_plugins.stdout_lines | map('split') | map('first') | list"
+# The plugin's checkout is owned by dokku, so installing it adds it to root's
+# safe.directory in ~/.gitconfig, which git needs to read it as root. systemd
+# doesn't set HOME for the deploy service, so it's set here.
+- name: Install and update Dokku's letsencrypt plugin
+  environment:
+    HOME: /root
+  block:
+    # Each line of plugin:list starts with the plugin's name
+    - name: Install Dokku's letsencrypt plugin
+      ansible.builtin.command: >-
+        dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git
+        --committish {{ letsencrypt_plugin_commit }} --name letsencrypt
+      when: "'letsencrypt' not in dokku_plugins.stdout_lines | map('split') | map('first') | list"
 
-# As dokku, which owns the checkout, since git refuses to read a repository
-# owned by another user
-- name: Read the letsencrypt plugin's commit
-  ansible.builtin.command: sudo -u dokku git -C /var/lib/dokku/plugins/available/letsencrypt rev-parse HEAD
-  register: letsencrypt_plugin_head
-  changed_when: false
+    - name: Read the letsencrypt plugin's commit
+      ansible.builtin.command: git -C /var/lib/dokku/plugins/available/letsencrypt rev-parse HEAD
+      register: letsencrypt_plugin_head
+      changed_when: false
 
-- name: Update Dokku's letsencrypt plugin
-  ansible.builtin.command: dokku plugin:update letsencrypt {{ letsencrypt_plugin_commit }}
-  when: letsencrypt_plugin_head.stdout != letsencrypt_plugin_commit
+    - name: Update Dokku's letsencrypt plugin
+      ansible.builtin.command: dokku plugin:update letsencrypt {{ letsencrypt_plugin_commit }}
+      when: letsencrypt_plugin_head.stdout != letsencrypt_plugin_commit
 
 - name: Read letsencrypt's global settings
   ansible.builtin.command: dokku letsencrypt:report --global --format json
