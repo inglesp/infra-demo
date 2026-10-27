@@ -7,3 +7,6 @@ pr-description.txt
 infra/tofu/.terraform/
 *.tfstate
 *.tfstate.*
+# The app and infra repos, cloned here as a workspace
+/infra-demo-app/
+/infra-demo-infra/

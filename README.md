@@ -3,6 +3,14 @@
 A small Django app that counts visits to its one page.
 It's a demo app for setting up infrastructure and configuration as code.
 
+The app and its infrastructure are moving to two new repos, [infra-demo-app](https://github.com/inglesp/infra-demo-app) and [infra-demo-infra](https://github.com/inglesp/infra-demo-infra).
+To work on them together, clone them into this repo, which ignores them:
+
+```sh
+git clone git@github.com:inglesp/infra-demo-app.git
+git clone git@github.com:inglesp/infra-demo-infra.git
+```
+
 ## Running locally
 
 You need [just](https://github.com/casey/just) and [uv](https://docs.astral.sh/uv/).
