@@ -70,7 +70,6 @@ On pull requests, CI builds the image but doesn't publish it.
 The app runs on a DigitalOcean droplet, managed with [OpenTofu](https://opentofu.org/) in `infra/tofu/`.
 Each app in `local.apps` in `infra/tofu/main.tf` gets its own droplet, created by the `web-app` module.
 Each droplet has a block storage volume attached, for all persistent data, so that the droplet itself can be replaced.
-Ansible mounts it at `/srv/<app>/data`, owned by the app's UID (see below).
 OpenTofu refuses to destroy a volume: to really delete one, first remove `prevent_destroy` from the `web-app` module.
 Changing a droplet's image or SSH keys only affects new droplets, rather than replacing existing ones.
 Each droplet has a cloud firewall that allows inbound SSH, HTTP, HTTPS and ICMP, and all outbound traffic.
@@ -118,7 +117,7 @@ So a change merged to `main` is applied within a minute or so.
 If applying the playbook fails, the run still deploys the image, but shows as a failed `deploy` unit, and the next run tries the playbook again.
 That's the only way config reaches a droplet.
 
-At the moment, Ansible installs Docker, [Dokku](https://dokku.com/) and Dokku's [letsencrypt plugin](https://github.com/dokku/dokku-letsencrypt) (setting its email and adding its renewal cron job), and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
+Ansible installs Docker, [Dokku](https://dokku.com/) and Dokku's [letsencrypt plugin](https://github.com/dokku/dokku-letsencrypt) (setting its email and adding its renewal cron job), and mounts each droplet's volume at `/srv/<app>/data` with an `/etc/fstab` entry.
 The mount point is owned by UID 10001, which the app runs as in its image.
 It blocks containers from DigitalOcean's metadata service, which serves the droplet's `user_data`, and so its secrets, to anything on the droplet that asks.
 DigitalOcean mounts a newly attached volume under `/mnt/` itself, and Ansible removes that mount.

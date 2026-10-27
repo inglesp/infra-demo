@@ -1,4 +1,4 @@
-# jq is for the deploy script
+# jq is for the deploy and alert scripts
 - name: Install Docker and jq
   ansible.builtin.apt:
     name: [docker.io, jq]
