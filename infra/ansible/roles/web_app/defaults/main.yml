@@ -1,6 +1,5 @@
-# Dokku's letsencrypt plugin, pinned to a release. Changing this doesn't
-# upgrade an installed plugin: run `dokku plugin:update letsencrypt <version>`.
-letsencrypt_plugin_version: 0.25.2
+# Dokku's letsencrypt plugin, pinned to a commit, since a tag can be moved
+letsencrypt_plugin_commit: db2361a46a69be50f2560c1653fc0a386e6e5649  # 0.25.2
 
 # Where Let's Encrypt sends warnings about certificates that are about to expire
 letsencrypt_email: peter.inglesby@thedatalab.org
