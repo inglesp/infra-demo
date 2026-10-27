@@ -10,8 +10,8 @@ terraform {
 }
 
 # cloud-init runs this at the droplet's first boot. It writes the droplet's
-# settings and secrets, installs Ansible, and runs ansible-pull, which only
-# runs tasks tagged ansible_pull.
+# settings and secrets, installs Ansible, and runs ansible-pull to configure
+# the droplet.
 locals {
   user_data = "#cloud-config\n${yamlencode({
     package_update = true
@@ -46,6 +46,8 @@ locals {
         "--connection", "local",
         "--extra-vars", "@/etc/web-app/vars.json",
         "--vault-password-file", "/etc/web-app/vault-password",
+        # The whole playbook is tagged, so this does nothing, but removing it
+        # would replace the droplet
         "--tags", "ansible_pull",
         "infra/ansible/playbook.yml",
       ],
@@ -65,9 +67,8 @@ resource "digitalocean_droplet" "this" {
   user_data = local.user_data
 
   lifecycle {
-    # Changing either would replace the droplet. A new image only matters
-    # for new droplets, and SSH keys are managed on the droplet once it's
-    # created.
+    # Changing either would replace the droplet, so changes only apply to
+    # new droplets
     ignore_changes = [image, ssh_keys]
   }
 }
@@ -151,9 +152,8 @@ resource "random_password" "secret_key" {
   special = false
 }
 
-# The password for secrets encrypted with ansible-vault. Nothing is encrypted
-# yet, but it's in user_data now, so that adding secrets later doesn't mean
-# replacing the droplet.
+# The password for this app's secrets, encrypted with ansible-vault in
+# host_vars/<app>/vault.yml
 resource "random_password" "vault_password" {
   length  = 64
   special = false
