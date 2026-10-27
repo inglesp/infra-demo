@@ -1,4 +1,4 @@
-# jq is for the deploy script
+# jq is for the deploy and alert scripts
 - name: Install Docker and jq
   ansible.builtin.apt:
     name: [docker.io, jq]
@@ -23,26 +23,14 @@
     enabled: true
     state: started
 
-- name: Add the key that signs Dokku's apt repository
-  ansible.builtin.get_url:
-    url: https://packagecloud.io/dokku/dokku/gpgkey
-    dest: /etc/apt/keyrings/dokku.asc
-    mode: "0644"
-  register: dokku_repo_key
-
-# Written as a file, rather than with deb822_repository, because different
-# versions of that module order the fields differently, so the file would
-# change whenever Ubuntu's ansible package did.
 - name: Add Dokku's apt repository
-  ansible.builtin.copy:
-    content: |
-      Types: deb
-      URIs: https://packagecloud.io/dokku/dokku/ubuntu/
-      Suites: {{ ansible_facts['distribution_release'] }}
-      Components: main
-      Signed-By: /etc/apt/keyrings/dokku.asc
-    dest: /etc/apt/sources.list.d/dokku.sources
-    mode: "0644"
+  ansible.builtin.deb822_repository:
+    name: dokku
+    types: deb
+    uris: https://packagecloud.io/dokku/dokku/ubuntu/
+    suites: "{{ ansible_facts['distribution_release'] }}"
+    components: main
+    signed_by: https://packagecloud.io/dokku/dokku/gpgkey
   register: dokku_repo
 
 # The cache was probably refreshed above, so cache_valid_time wouldn't refresh
@@ -50,7 +38,7 @@
 - name: Update the apt cache for Dokku's repository
   ansible.builtin.apt:
     update_cache: true
-  when: dokku_repo_key.changed or dokku_repo.changed
+  when: dokku_repo.changed
 
 # skip_key_file: we don't deploy with `git push`, so Dokku needs no SSH key
 # web_config: don't serve Dokku's old web-based setup page
@@ -76,7 +64,6 @@
   ansible.builtin.command: dokku --quiet plugin:list
   register: dokku_plugins
   changed_when: false
-  check_mode: false
 
 # Each line of plugin:list starts with the plugin's name
 - name: Install Dokku's letsencrypt plugin
@@ -89,7 +76,6 @@
   ansible.builtin.command: dokku letsencrypt:report --global --format json
   register: letsencrypt_global
   changed_when: false
-  check_mode: false
 
 - name: Set letsencrypt's email
   ansible.builtin.command: dokku letsencrypt:set --global email {{ letsencrypt_email }}
@@ -99,32 +85,28 @@
   ansible.builtin.command: dokku letsencrypt:cron-job
   register: letsencrypt_cron_job
   changed_when: false
-  check_mode: false
 
 - name: Add letsencrypt's renewal cron job
   ansible.builtin.command: dokku letsencrypt:cron-job --add
   when: "'cron job is not enabled' in letsencrypt_cron_job.stdout"
 
 # Dokku has no declarative config, so each setting is read first, and only
-# changed when it differs. The reads run in check mode too, since they change
-# nothing.
+# changed when it differs.
 - name: List Dokku's apps
   ansible.builtin.command: dokku --quiet apps:list
   register: dokku_apps
   changed_when: false
-  check_mode: false
 
 - name: Create the Dokku app
   ansible.builtin.command: dokku apps:create {{ app_name }}
   when: app_name not in dokku_apps.stdout_lines
 
-# If the app has only just been created (or would be, in check mode), there's
-# nothing to read, so the domain is set regardless
+# If the app has only just been created, there's nothing to read, so the domain
+# is set regardless
 - name: Read the app's domains
   ansible.builtin.command: dokku domains:report {{ app_name }} --domains-app-vhosts
   register: dokku_app_domains
   changed_when: false
-  check_mode: false
   when: app_name in dokku_apps.stdout_lines
 
 - name: Set the app's domain
@@ -135,7 +117,6 @@
   ansible.builtin.command: dokku letsencrypt:report {{ app_name }} --letsencrypt-active
   register: letsencrypt_active
   changed_when: false
-  check_mode: false
   when: app_name in dokku_apps.stdout_lines
 
 # Otherwise Dokku publishes the port the image exposes, rather than 80
@@ -143,7 +124,6 @@
   ansible.builtin.command: dokku ports:report {{ app_name }} --ports-map
   register: dokku_app_ports
   changed_when: false
-  check_mode: false
   when: app_name in dokku_apps.stdout_lines
 
 # Enabling letsencrypt adds a mapping for 443, and disabling it removes it
@@ -159,7 +139,6 @@
   ansible.builtin.command: dokku --quiet storage:list {{ app_name }}
   register: dokku_app_storage
   changed_when: false
-  check_mode: false
   when: app_name in dokku_apps.stdout_lines
 
 - name: Mount the volume into the app's container
@@ -172,7 +151,6 @@
   ansible.builtin.command: dokku config:export --format json {{ app_name }}
   register: dokku_config
   changed_when: false
-  check_mode: false
   when: app_name in dokku_apps.stdout_lines
   no_log: true
 
