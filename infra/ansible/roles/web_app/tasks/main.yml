@@ -3,8 +3,8 @@
 # tasks wouldn't, so the bootstrap would skip them.
 - ansible.builtin.import_tasks: host.yml
 - ansible.builtin.import_tasks: dokku.yml
-- ansible.builtin.import_tasks: app.yml
 - ansible.builtin.import_tasks: volume.yml
+- ansible.builtin.import_tasks: app.yml
 - ansible.builtin.import_tasks: alerts.yml
 # Last, since it runs the handlers, including restarting the app, before
 # starting the deploy timer
