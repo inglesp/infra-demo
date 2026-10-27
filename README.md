@@ -107,7 +107,7 @@ OpenTofu's state is kept in the `inglesp-infra-demo-tofu-state` Spaces bucket, i
 The bucket was created by hand, since it can't hold its own state.
 The state is encrypted with the state passphrase: if the passphrase is lost, so is the state.
 The state holds secrets, such as each app's Django secret key, which OpenTofu generates and puts in the droplet's `user_data`.
-State isn't locked, so only one person should run `just apply` at a time.
+State is locked while OpenTofu uses it, with a lock file next to it in the bucket, so two runs can't change it at once.
 
 ## Server configuration
 
@@ -196,3 +196,12 @@ The DNS records can take up to 30 minutes to point at the new IP address everywh
 Set `image_tag` in `infra/ansible/host_vars/<app>/main.yml` to `sha-<commit>`, where `<commit>` is the full SHA of a commit on `main`, and merge the change.
 Within a minute or so, the droplet applies and deploys it.
 Set it back to `latest`, and merge that, to return to deploying each new build.
+
+### Remove a stale state lock
+
+If an OpenTofu run is killed before it releases its lock, later runs fail with "Error acquiring the state lock".
+Check that nobody else is running OpenTofu, then remove the lock, using the ID from the error:
+
+```sh
+just tofu force-unlock <ID>
+```
